@@ -1,0 +1,249 @@
+{
+  "constructs": [
+    {
+      "id": "fraction_number_line",
+      "name": "Locating fractions on a number line",
+      "description": "Place and read fraction positions between 0 and 1 (and beyond) on a number line.",
+      "levels": [
+        {
+          "level": 1,
+          "label": "informal",
+          "correct_behaviors": ["Roughly guesses closer to 0 or 1"],
+          "misconceptions": ["Treats denominator as distance from 0", "Ignores scale of the number line"],
+          "student_language": ["It's somewhere in the middle", "Closer to one I think"]
+        },
+        {
+          "level": 2,
+          "label": "partial",
+          "correct_behaviors": ["Places halves and fourths with prompting"],
+          "misconceptions": ["Swaps numerator and denominator on the line", "Uses only unit fractions as anchors"],
+          "student_language": ["Is 3/4 past the half mark?", "I put it near 1/2 but I'm not sure"]
+        },
+        {
+          "level": 3,
+          "label": "solid",
+          "correct_behaviors": ["Locates common fractions on a 0-1 line"],
+          "misconceptions": ["Struggles with improper fractions on the same line"],
+          "student_language": ["3/4 is three jumps of 1/4 from 0"]
+        },
+        {
+          "level": 4,
+          "label": "generalized",
+          "correct_behaviors": ["Explains placement using equivalence and scale"],
+          "misconceptions": [],
+          "student_language": ["It's the same point as 6/8"]
+        }
+      ]
+    },
+    {
+      "id": "compare_fractions_unlike",
+      "name": "Comparing fractions with unlike denominators",
+      "description": "Decide which of two fractions is greater when denominators differ.",
+      "levels": [
+        {
+          "level": 1,
+          "label": "informal",
+          "correct_behaviors": [],
+          "misconceptions": ["Compares numerators only", "Assumes larger denominator means larger fraction"],
+          "student_language": ["4 is bigger than 3 so 1/4 is bigger", "I just look at the top number"]
+        },
+        {
+          "level": 2,
+          "label": "partial",
+          "correct_behaviors": ["Uses benchmarks like 1/2 with support"],
+          "misconceptions": ["Incorrect common denominator when attempting comparison"],
+          "student_language": ["I think 2/3 is more than half", "I'm not sure if I need the same bottom number"]
+        },
+        {
+          "level": 3,
+          "label": "solid",
+          "correct_behaviors": ["Compares using common denominators or equivalent fractions"],
+          "misconceptions": ["Arithmetic slips after correct method chosen"],
+          "student_language": ["I'll get the same denominator first"]
+        },
+        {
+          "level": 4,
+          "label": "generalized",
+          "correct_behaviors": ["Compares using multiple strategies flexibly"],
+          "misconceptions": [],
+          "student_language": ["These are equivalent so they're equal"]
+        }
+      ]
+    },
+    {
+      "id": "common_denominator",
+      "name": "Finding a common denominator",
+      "description": "Identify and use a common denominator to add or subtract fractions.",
+      "levels": [
+        {
+          "level": 1,
+          "label": "informal",
+          "correct_behaviors": [],
+          "misconceptions": ["Adds denominators directly", "Uses product of denominators without adjusting numerators"],
+          "student_language": ["Can't you just make the bottoms the same by adding them?", "I don't know what LCD means"]
+        },
+        {
+          "level": 2,
+          "label": "partial",
+          "correct_behaviors": ["Finds a common denominator with hints (e.g. 6 for 2 and 3)"],
+          "misconceptions": ["Finds LCD but forgets to scale numerators", "Uses wrong multiple"],
+          "student_language": ["Maybe 6 works?", "I changed the bottom but forgot the top"]
+        },
+        {
+          "level": 3,
+          "label": "solid",
+          "correct_behaviors": ["Finds LCD and rewrites both fractions"],
+          "misconceptions": ["Subtracts numerators correctly but slips on final simplification"],
+          "student_language": ["1/3 is 2/6 so now I can subtract"]
+        },
+        {
+          "level": 4,
+          "label": "generalized",
+          "correct_behaviors": ["Efficiently uses LCD across add/subtract contexts"],
+          "misconceptions": [],
+          "student_language": ["The LCD is 12 because..."]
+        }
+      ]
+    },
+    {
+      "id": "add_subtract_fractions",
+      "name": "Adding and subtracting fractions",
+      "description": "Combine fractions with like or unlike denominators in context.",
+      "levels": [
+        {
+          "level": 1,
+          "label": "informal",
+          "correct_behaviors": [],
+          "misconceptions": ["Adds numerators and denominators straight across", "Subtracts smaller from larger numerator only"],
+          "student_language": ["1/4 + 2/3 = 3/7", "You just add the tops and bottoms"]
+        },
+        {
+          "level": 2,
+          "label": "partial",
+          "correct_behaviors": ["Adds/subtracts with like denominators"],
+          "misconceptions": ["Fails to convert unlike denominators before operating"],
+          "student_language": ["I know you need the same denominator but I mess it up"]
+        },
+        {
+          "level": 3,
+          "label": "solid",
+          "correct_behaviors": ["Completes add/subtract with unlike denominators"],
+          "misconceptions": ["Sign or arithmetic slip in multi-step problems"],
+          "student_language": ["So 5/6 minus 2/6 is 3/6"]
+        },
+        {
+          "level": 4,
+          "label": "generalized",
+          "correct_behaviors": ["Simplifies and explains fraction operations"],
+          "misconceptions": [],
+          "student_language": ["3/6 simplifies to 1/2"]
+        }
+      ]
+    },
+    {
+      "id": "fraction_decimal_percent",
+      "name": "Fraction-decimal-percent equivalence",
+      "description": "Connect representations of rational numbers across fraction, decimal, and percent.",
+      "levels": [
+        {
+          "level": 1,
+          "label": "informal",
+          "correct_behaviors": ["Knows 50% relates to half informally"],
+          "misconceptions": ["Treats percent as additive with fractions"],
+          "student_language": ["50% is like half I guess"]
+        },
+        {
+          "level": 2,
+          "label": "partial",
+          "correct_behaviors": ["Converts familiar fractions to decimals with support"],
+          "misconceptions": ["Misplaces decimal point", "Confuses 0.25 with 25%"],
+          "student_language": ["0.25 is 25 out of 100 maybe"]
+        },
+        {
+          "level": 3,
+          "label": "solid",
+          "correct_behaviors": ["Converts between common fraction/decimal/percent forms"],
+          "misconceptions": [],
+          "student_language": ["1/4 is 0.25 which is 25%"]
+        },
+        {
+          "level": 4,
+          "label": "generalized",
+          "correct_behaviors": ["Explains equivalence in multiple representations"],
+          "misconceptions": [],
+          "student_language": ["They're all the same amount"]
+        }
+      ]
+    },
+    {
+      "id": "ratio_equivalence",
+      "name": "Identifying ratio equivalence",
+      "description": "Recognize when two ratios describe the same relationship.",
+      "levels": [
+        {
+          "level": 1,
+          "label": "informal",
+          "correct_behaviors": [],
+          "misconceptions": ["Compares totals instead of part-to-part", "Adds parts to get ratio"],
+          "student_language": ["Isn't 2:3 the same as adding 2 and 3?"]
+        },
+        {
+          "level": 2,
+          "label": "partial",
+          "correct_behaviors": ["Simplifies simple ratios with prompting"],
+          "misconceptions": ["Doubles one part only when scaling"],
+          "student_language": ["If I double one side do I double the other?"]
+        },
+        {
+          "level": 3,
+          "label": "solid",
+          "correct_behaviors": ["Identifies equivalent ratios by scaling"],
+          "misconceptions": [],
+          "student_language": ["4:6 is the same as 2:3"]
+        },
+        {
+          "level": 4,
+          "label": "generalized",
+          "correct_behaviors": ["Uses equivalence in context problems"],
+          "misconceptions": [],
+          "student_language": ["The relationship stays the same"]
+        }
+      ]
+    },
+    {
+      "id": "unit_rate",
+      "name": "Unit rate and base ratio reasoning",
+      "description": "Find per-one amounts and compare rates in context.",
+      "levels": [
+        {
+          "level": 1,
+          "label": "informal",
+          "correct_behaviors": [],
+          "misconceptions": ["Divides in wrong order", "Uses difference instead of rate"],
+          "student_language": ["Which number do I divide by?", "Is it just the bigger minus smaller?"]
+        },
+        {
+          "level": 2,
+          "label": "partial",
+          "correct_behaviors": ["Computes unit rate with a model or table"],
+          "misconceptions": ["Unit rate correct but misapplies to comparison"],
+          "student_language": ["Per one mile is... wait I confused miles and hours"]
+        },
+        {
+          "level": 3,
+          "label": "solid",
+          "correct_behaviors": ["Finds and interprets unit rates"],
+          "misconceptions": [],
+          "student_language": ["$3 per pound means divide total by pounds"]
+        },
+        {
+          "level": 4,
+          "label": "generalized",
+          "correct_behaviors": ["Compares options using unit rates"],
+          "misconceptions": [],
+          "student_language": ["The better deal has the lower cost per item"]
+        }
+      ]
+    }
+  ]
+}

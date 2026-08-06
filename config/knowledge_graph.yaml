@@ -1,0 +1,444 @@
+# backend/config/knowledge_graph.yaml
+#
+# v2 Knowledge Graph — Rational Number + Linear Change (Grades 5-8)
+#
+# STRUCTURAL SOURCE (authoritative for nodes and edges):
+#   Hess, K. K. (Ed.) 2010/2011. Learning Progressions Frameworks Designed for Use
+#   with the Common Core State Standards in Mathematics K-12. NCIEA / NAAC.
+#   https://www.nciea.org/wp-content/uploads/2022/07/Math_LPF_KH11.pdf
+#   Each construct below is anchored to a middle-school (5-8) grade-span learning
+#   target (M.NO-1/2/3, M.PRF-1/2, M.SE-1) and the progress indicators (PIs) under it.
+#   Edge direction follows LPF PI ordering ("descriptions of earlier skills build the
+#   foundation for later skills", LPF p. 10) and grade-span sequence.
+#
+# MASTERY STACK SOURCE (per-node level descriptions only, not structure):
+#   dlm_linkage_levels — DLM Essential Elements linkage levels (IP/DP/PP/T/S)
+#   https://dynamiclearningmaps.org/essential-elements/math
+#   Used where a DLM Essential Element exists for the construct. Constructs added
+#   from PRF/linear PIs have no vetted DLM alignment yet and instead carry
+#   `lpf_stack`, whose levels are written directly from LPF PI wording and map onto
+#   the 0-3 mastery scale in docs/design-decisions.md (bad / partial / good).
+#
+# pisa_links — PLOS ONE 2025, six math competency attributes
+#   https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0315539
+#
+# See docs/lpf-source-mapping.md for the construct-by-construct citation table
+# used for content review.
+
+# ─────────────────────────────────────────────────
+# CONSTRUCTS — one node per LPF-anchored construct
+# (fraction/ratio IDs match rational_number_constructs.json)
+# ─────────────────────────────────────────────────
+constructs:
+
+  part_whole:
+    id: part_whole
+    label: "Part-Whole Understanding of Fractions"
+    ccss: ["5.NF.3", "6.NS.1"]
+    grade_span: "5-6"
+    lpf_strand: "NO"
+    lpf_learning_target: "M.NO-1 / M.NO-2"
+    lpf_progress_indicators:
+      - "M.NO.2b recognizing fractions as one number (one quantity), rather than two numbers (numerator and denominator) and using number lines to represent magnitude of fractions and equivalent/non-equivalent fractions (5.NF-3)"
+      - "M.NO.1c using a variety of fractional and decimal representations and locating them on a number line (5.NBT-3a; 5.NF-1)"
+    dlm_ee: "M.EE.6.NS.1"
+    dlm_target_description: >
+      Recognize a fraction a/b as a quotient of two integers;
+      compare unit fractions using manipulatives.
+    dlm_linkage_levels:
+      IP: "Recognize a group of countable objects as a unit"
+      DP: "Recognize an object that has all parts joined (wholeness)"
+      PP: "Recognize parts of an object vs the whole object"
+      T:  "Compare unit fractions (e.g. 1/4 < 1/2) using manipulatives"
+      S:  "Add fractions with common denominators; decompose into unit fractions"
+    target_stack_level: 3
+    # Surface phrases that signal this construct in teacher talk. Read by
+    # app.construct_text.construct_cues and shared by scaffold detection and LP
+    # routing, so a construct's vocabulary is defined once, here. Novel wording is
+    # handled by the embedding fallback rather than by growing these lists.
+    cues:
+      - "part"
+      - "whole"
+      - "unit fraction"
+      - "piece"
+      - "split"
+      - "denominator"
+      - "numerator"
+      - "bigger"
+      - "smaller"
+      - "compare"
+      - "fraction"
+
+  fraction_equivalence:
+    id: fraction_equivalence
+    label: "Equivalent Fractions"
+    ccss: ["6.NS.1", "6.RP.1"]
+    grade_span: "5-6"
+    lpf_strand: "NO"
+    lpf_learning_target: "M.NO-1 / M.NO-2"
+    lpf_progress_indicators:
+      - "M.NO.1f recognizing equivalence of representations using fractions, decimals, and percents and using them to solve ratio problems (6.RP-1, 3)"
+      - "M.NO.2b ... using number lines to represent magnitude of fractions and equivalent/non-equivalent fractions (5.NF-3)"
+    dlm_ee: "M.EE.6.NS.1"
+    dlm_linkage_levels:
+      IP: "Recognize group of countable objects as a unit"
+      DP: "Divide familiar shapes into equal parts"
+      PP: "Recognize fraction as a/b; understand unit fraction"
+      T:  "Compare fractions using numerator/denominator understanding"
+      S:  "Add fractions with common denominators"
+    target_stack_level: 3
+    cues:
+      - "equivalent"
+      - "common denominator"
+      - "lcd"
+      - "lcm"
+      - "least common"
+      - "same denominator"
+      - "convert"
+      - "rename"
+
+  fraction_operations:
+    id: fraction_operations
+    label: "Fraction Operations (Add/Subtract Unlike Denominators)"
+    ccss: ["5.NF.1", "6.NS.1"]
+    grade_span: "5-6"
+    lpf_strand: "NO"
+    lpf_learning_target: "M.NO-2"
+    lpf_progress_indicators:
+      - "M.NO.2c using operations and standard algorithms with whole numbers, fractions (unlike denominators), and decimals (to hundredths) (5.NBT-5, 6, 7; 5.NF-1, 2, 4, 7; 6.NS-1, 3)"
+      - "M.NO.2a working flexibility with common addition, subtraction, multiplication, and division situations (5.NBT-5, 6; 5.NF-5a; 6.NS-2, 3, 4)"
+    dlm_ee: "M.EE.6.NS.1"
+    dlm_linkage_levels:
+      IP: "Recognize and count equal parts of a shape"
+      DP: "Identify numerator and denominator"
+      PP: "Add fractions with common denominators"
+      T:  "Subtract fractions with unlike denominators using equivalent fractions"
+      S:  "Add and subtract mixed numbers; solve word problems with unlike denominators"
+    target_stack_level: 3
+    cues:
+      - "subtract"
+      - "add"
+      - "minus"
+      - "plus"
+      - "simplify"
+      - "reduce"
+      - "operation"
+      - "sum"
+      - "difference"
+
+  ratio_concept:
+    id: ratio_concept
+    label: "Ratio as Multiplicative Relationship"
+    ccss: ["6.RP.1"]
+    grade_span: "6"
+    lpf_strand: "NO"
+    lpf_learning_target: "M.NO-1"
+    lpf_progress_indicators:
+      - "M.NO.1f recognizing equivalence of representations using fractions, decimals, and percents and using them to solve ratio problems (6.RP-1, 3)"
+      - "M.SE.1d interpreting and using symbols to express relationships (e.g. ordered pairs, ratios, percents) (6.RP-1, 3c; 6.EE-1, 6)"
+    dlm_ee: "M.EE.6.RP.1"
+    dlm_linkage_levels:
+      IP: "Recognize a group of countable objects (unit)"
+      DP: "Recognize wholeness: object with all parts joined"
+      PP: "Recognize parts of a whole; divide shapes into equal parts"
+      T:  "Recognize 1:4 ratio (one group has 4x as many); represent as 1:4 or 1/4"
+      S:  "Represent many-to-many ratio (e.g. 2:3) from two groups of multiple objects"
+    target_stack_level: 3
+    cues:
+      - "ratio"
+      - "compare quantities"
+      - "for every"
+      - "to one"
+
+  ratio_equivalence:
+    id: ratio_equivalence
+    label: "Equivalent Ratios and Ratio Tables"
+    ccss: ["6.RP.1", "6.RP.3"]
+    grade_span: "6"
+    lpf_strand: "NO / PRF"
+    lpf_learning_target: "M.NO-1 / M.PRF-2"
+    lpf_progress_indicators:
+      - "M.NO.1f ... using them to solve ratio problems (6.RP-1, 3)"
+      - "M.PRF.2a representing, analyzing, extending, and generalizing a variety of patterns using tables, graphs, words, and symbolic rules (5.OA-3; 5.NBT-2; 6.EE-6, 9)"
+    dlm_ee: "M.EE.6.RP.1"
+    dlm_linkage_levels:
+      IP: "Recognize a group of countable objects"
+      DP: "Recognize parts and whole"
+      PP: "Represent a 1:n ratio"
+      T:  "Represent a many-to-many ratio (a:b)"
+      S:  "Use ratio table to identify equivalent ratios across contexts"
+    target_stack_level: 3
+    cues:
+      - "ratio table"
+      - "equivalent ratio"
+      - "missing value"
+      - "scale up"
+      - "scale down"
+
+  unit_rate:
+    id: unit_rate
+    label: "Unit Rate and Rate Reasoning"
+    ccss: ["6.RP.2", "6.RP.3b"]
+    grade_span: "6-7"
+    lpf_strand: "PRF"
+    lpf_learning_target: "M.PRF-1"
+    lpf_progress_indicators:
+      - "M.PRF.1e representing and computing unit rates associated with ratios of lengths, areas, and other quantities measured in like or different units (7.RP-1, 2, 3; 8.EE-5)"
+      - "M.PRF.1h representing and describing how rates of change can be computed from differences in magnitudes and vice versa"
+    dlm_ee: "M.EE.6.RP.1"
+    dlm_linkage_levels:
+      IP: "Recognize unit (countable group)"
+      DP: "Compare two groups by size"
+      PP: "Identify a 1:n ratio"
+      T:  "Compute unit rate from a ratio (e.g. miles per hour)"
+      S:  "Solve novel unit-rate word problems; connect to proportional relationships"
+    target_stack_level: 3
+    cues:
+      - "unit rate"
+      - "per hour"
+      - "per ounce"
+      - "per mile"
+      - "per unit"
+      - "miles per"
+      - "unit price"
+      - "cost per"
+      - "price per"
+
+  proportional_reasoning:
+    id: proportional_reasoning
+    label: "Proportional Relationships"
+    ccss: ["7.RP.2"]
+    grade_span: "7"
+    lpf_strand: "NO"
+    lpf_learning_target: "M.NO-2 / M.NO-3"
+    lpf_progress_indicators:
+      - "M.NO.2f describing proportional relationships and solving related problems (7.RP-1, 2, 3; also grade 6: 6.RP-2, 3)"
+      - "M.NO.3c using stated assumptions, definitions, patterns, and previously established results in constructing mathematical arguments (7.RP-2a, 2d; 8.EE-6; 8.F-5)"
+    dlm_ee: "M.EE.7.RP.1"
+    dlm_linkage_levels:
+      IP: "Recognize a unit"
+      DP: "Identify equal groups"
+      PP: "Identify a ratio and find an equivalent"
+      T:  "Determine whether two quantities are proportional using tables"
+      S:  "Represent proportional relationships with equations y = kx; interpret k"
+    target_stack_level: 3
+    cues:
+      - "proportional"
+      - "constant of proportionality"
+      - "times as much"
+      - "scale it up"
+      - "y = kx"
+
+  # ── Added in v2 from LPF PIs that carry the linear-change scenarios ──
+  # (phone plans and any fixed-fee-plus-rate comparison task)
+
+  additive_vs_multiplicative:
+    id: additive_vs_multiplicative
+    label: "Additive vs Multiplicative Structure of a Situation"
+    ccss: []          # LPF flags this PI as essential learning with no direct CCSS link
+    grade_span: "5-6"
+    lpf_strand: "NO"
+    lpf_learning_target: "M.NO-2"
+    lpf_progress_indicators:
+      - "M.NO.2d contrasting situations as additive or multiplicative (no CCSS link in LPF)"
+      - "M.PRF.1a describing how multiplication or division changes a quantity, including with fractions or decimals (5.NF-4a, 5, 7b; 6.NS-1)"
+    dlm_ee: null
+    lpf_stack:
+      bad:     "Reads every quantity in a story as something to add; a per-unit charge is treated as a one-time amount"
+      partial: "Separates a fixed amount from a per-unit amount when prompted, but not consistently across both options in a comparison"
+      good:    "Decides unprompted whether each quantity in the situation is a fixed amount or grows with the number of units, and says why"
+    target_stack_level: 3
+    cues:
+      - "monthly fee"
+      - "flat fee"
+      - "fixed cost"
+      - "one time"
+      - "one-time"
+      - "start with"
+      - "starting amount"
+      - "adds up"
+      - "grows with"
+      - "every time"
+      - "each one"
+
+  linear_relationship:
+    id: linear_relationship
+    label: "Linear vs Nonlinear (and Proportional vs Non-Proportional) Relationships"
+    ccss: ["6.RP.3a", "8.F.3"]
+    grade_span: "6-8"
+    lpf_strand: "PRF"
+    lpf_learning_target: "M.PRF-1 / M.PRF-2"
+    lpf_progress_indicators:
+      - "M.PRF.1b distinguishing linear from nonlinear relationships as represented in graphical and tabular representations (5.OA-3; 6.RP-3a)"
+      - "M.PRF.2b relating and comparing different forms of representation and identifying functions as linear or nonlinear (5.OA-3; 6.RP-1, 2, 3; 6.EE-6, 7, 9)"
+      - "M.PRF.2c relating and comparing different forms of representation and identifying functions as linear or nonlinear (8.F-3)"
+      - "M.PRF.2e using functions to describe quantitative relationships (8.EE-5, 7; 8.F-1, 3, 4, 5)"
+    dlm_ee: null
+    lpf_stack:
+      bad:     "Assumes any growing situation scales like a ratio table — doubling the input doubles the output"
+      partial: "Reads a table or graph as linear, but treats a line with a starting amount as if it passed through the origin"
+      good:    "Distinguishes a proportional relationship from a linear one with a starting value, in tables, graphs, and equations"
+    target_stack_level: 3
+    cues:
+      - "linear"
+      - "straight line"
+      - "graph it"
+      - "on a graph"
+      - "make a table"
+      - "slope"
+      - "y-intercept"
+      - "start at"
+      - "starts at"
+      - "at zero"
+      - "rate of change"
+
+  rate_comparison:
+    id: rate_comparison
+    label: "Comparing Two Rates for Best Value"
+    ccss: ["6.RP.2", "6.RP.3b", "6.EE.6"]
+    grade_span: "6-7"
+    lpf_strand: "PRF"
+    lpf_learning_target: "M.PRF-1"
+    lpf_progress_indicators:
+      - "M.PRF.1c comparing two rates and evaluating them for a given situation (e.g., best value) (6.RP-1, 2, 3b; 6.EE-4, 6)"
+      - "M.NO.3b critiquing the mathematical arguments provided by others (6.RP-3a, 3d; 6.EE-5)"
+    dlm_ee: null
+    lpf_stack:
+      bad:     "Picks the option with the smaller per-unit number and calls it better for every case"
+      partial: "Compares the two options at one or two sample values but does not look for where the better option changes"
+      good:    "Determines the range over which each option is better and identifies the value where they are equal"
+    target_stack_level: 3
+    # Substring matching makes bare "plan a"/"plan b" unusable - "each plan and"
+    # contains "plan a" - so cues name the comparison, not the individual labels.
+    cues:
+      - "which plan"
+      - "which option"
+      - "which is better"
+      - "better deal"
+      - "best value"
+      - "cheaper"
+      - "same cost"
+      - "break even"
+      - "crossover"
+      - "two plans"
+      - "each plan"
+      - "both plans"
+      - "both options"
+      - "compare the plans"
+      - "compare the options"
+
+  symbolic_modeling:
+    id: symbolic_modeling
+    label: "Modeling a Situation with Equations and Solving Them"
+    ccss: ["6.EE.9", "7.EE.4", "8.EE.7"]
+    grade_span: "6-8"
+    lpf_strand: "PRF / SE"
+    lpf_learning_target: "M.PRF-1 / M.PRF-2 / M.SE-1"
+    lpf_progress_indicators:
+      - "M.PRF.1d using symbolic equations to summarize how the quantity of something changes (6.EE-4, 7, 9)"
+      - "M.PRF.1f identifying essential quantitative relationships in a situation and using symbolic expressions to represent it and draw reasonable conclusions from it (7.RP-1, 2, 3; 7.EE-2, 3, 4; 8.EE-5, 7; 8.F-1, 2, 3, 4, 5)"
+      - "M.PRF.1g modeling, solving, and explaining contextualized problems using various representations such as graphs, tables, functions, and equations (7.RP-2, 3; 7.EE-2, 4; 8.EE-5, 7; 8.F-2, 3, 4, 5)"
+      - "M.PRF.2d solving linear equations and formulating and explaining reasoning about expressions and equations (7.EE-2, 4a; 8.EE-6, 7)"
+      - "M.SE.1f writing and interpreting mathematical expressions, equations, and inequalities that correspond to given situations (7.EE-4a, 4b; 8.EE-8c; 8.F-3)"
+    dlm_ee: null
+    lpf_stack:
+      bad:     "Writes numbers from the story into an expression without a variable, or drops a quantity that the story states"
+      partial: "Writes an equation for each option but cannot say what each coefficient or constant means in the story, or slips when solving"
+      good:    "Writes an equation per option, explains each term in context, sets them equal, and interprets the solution as a decision point"
+    target_stack_level: 3
+    cues:
+      - "equation"
+      - "expression"
+      - "let x"
+      - "variable"
+      - "write it as"
+      - "set them equal"
+      - "solve for x"
+      - "formula"
+
+# ─────────────────────────────────────────────────
+# PREREQUISITES — directed edges encoding LPF order
+# Format: [from_id, to_id, rationale]
+# ─────────────────────────────────────────────────
+prerequisites:
+
+  # Rational number strand (NO)
+  - [part_whole,          fraction_equivalence, "Fraction as one quantity (M.NO.2b) precedes recognising equivalent forms (M.NO.1f) — LPF NO strand, grades 5-6"]
+  - [part_whole,          fraction_operations,  "Magnitude of fractions on the number line (M.NO.2b) precedes operating on them (M.NO.2c) — LPF NO strand"]
+  - [fraction_equivalence, fraction_operations, "Standard algorithms with unlike denominators (M.NO.2c) require producing equivalent fractions (M.NO.1f)"]
+  - [fraction_equivalence, ratio_concept,       "M.NO.1f pairs equivalence of fraction/decimal/percent representations with using them to solve ratio problems (6.RP-1, 3)"]
+  - [ratio_concept,       ratio_equivalence,    "Generalising a ratio across a table (M.PRF.2a) builds on reading a:b as one multiplicative comparison (M.NO.1f)"]
+  - [ratio_equivalence,   unit_rate,            "Unit rates (M.PRF.1e, grades 7-8) follow equivalent-ratio work in the grades 5-6 span"]
+  - [unit_rate,           proportional_reasoning, "Describing proportional relationships (M.NO.2f) generalises computed unit rates (M.PRF.1e) — 7.RP-1,2,3"]
+  - [fraction_operations, proportional_reasoning, "Fluent rational-number computation (M.NO.2c) is the operational base for M.NO.2f proportional problems"]
+
+  # Linear-change strand (PRF) — phone plans and other fixed-fee-plus-rate tasks
+  - [ratio_concept,       additive_vs_multiplicative, "Contrasting additive and multiplicative situations (M.NO.2d) presumes a multiplicative comparison is available (M.NO.1f)"]
+  - [additive_vs_multiplicative, proportional_reasoning, "M.NO.2d (grades 5-6) precedes M.NO.2f proportional relationships (grades 7-8) in the LPF NO-2 sequence"]
+  - [ratio_equivalence,   linear_relationship,  "M.PRF.1b distinguishes linear from nonlinear in tables and graphs, the representations built in M.PRF.2a / 6.RP-3a"]
+  - [linear_relationship, rate_comparison,      "LPF orders M.PRF.1b before M.PRF.1c within the grades 5-6 PRF span"]
+  - [unit_rate,           rate_comparison,      "M.PRF.1c compares two rates for best value (6.RP-2, 3b); each rate must first be computed (M.PRF.1e)"]
+  - [rate_comparison,     symbolic_modeling,    "M.PRF.1c precedes M.PRF.1d/1f/1g, where the compared situation is summarised symbolically"]
+  - [additive_vs_multiplicative, symbolic_modeling, "Writing y = mx + b rather than y = kx depends on separating a fixed amount from a rate (M.NO.2d)"]
+  - [proportional_reasoning, symbolic_modeling, "M.NO.2f proportional reasoning underpins M.PRF.2d solving and explaining linear equations"]
+
+# ─────────────────────────────────────────────────
+# PISA COMPETENCY ATTRIBUTE NODES
+# Source: PLOS ONE 2025 (doi:10.1371/journal.pone.0315539)
+# Six attributes with typical learning path:
+#   Operation / Abstraction → Reasoning / Modeling → Imagination / Data Analysis
+# ─────────────────────────────────────────────────
+pisa_attributes:
+
+  mathematical_operation:
+    id: mathematical_operation
+    label: "Mathematical Operation"
+    pisa_order: 1
+    description: "Execute arithmetic and algebraic procedures fluently"
+
+  mathematical_abstraction:
+    id: mathematical_abstraction
+    label: "Mathematical Abstraction"
+    pisa_order: 1
+    description: "Recognise and use mathematical structures and generalisations"
+
+  logical_reasoning:
+    id: logical_reasoning
+    label: "Logical Reasoning"
+    pisa_order: 2
+    description: "Construct and evaluate mathematical arguments and justifications"
+
+  mathematical_modeling:
+    id: mathematical_modeling
+    label: "Mathematical Modeling"
+    pisa_order: 2
+    description: "Translate real-world situations into mathematical representations"
+
+  intuitive_imagination:
+    id: intuitive_imagination
+    label: "Intuitive Imagination"
+    pisa_order: 3
+    description: "Visualise mathematical relationships spatially and intuitively"
+
+  data_analysis:
+    id: data_analysis
+    label: "Data Analysis"
+    pisa_order: 3
+    description: "Interpret, organise and draw conclusions from data"
+
+# ─────────────────────────────────────────────────
+# PISA LINKS — which PISA attributes each construct exercises
+# ─────────────────────────────────────────────────
+pisa_links:
+
+  part_whole:           ["mathematical_operation", "mathematical_abstraction"]
+  fraction_equivalence: ["mathematical_operation", "mathematical_abstraction"]
+  ratio_concept:        ["mathematical_operation", "mathematical_abstraction", "logical_reasoning"]
+  ratio_equivalence:    ["mathematical_operation", "mathematical_modeling"]
+  unit_rate:            ["mathematical_operation", "mathematical_modeling", "logical_reasoning"]
+  proportional_reasoning: ["logical_reasoning", "mathematical_modeling", "intuitive_imagination"]
+  fraction_operations:  ["mathematical_operation"]
+  additive_vs_multiplicative: ["mathematical_abstraction", "logical_reasoning"]
+  linear_relationship:  ["mathematical_abstraction", "mathematical_modeling", "intuitive_imagination"]
+  rate_comparison:      ["mathematical_modeling", "logical_reasoning", "mathematical_operation"]
+  symbolic_modeling:    ["mathematical_modeling", "mathematical_abstraction", "logical_reasoning"]

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Simulator — Small-Group Practice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css?v=7" />
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="app-header">
+    <div class="brand">
+      <p class="brand-mark">Student Simulator</p>
+      <p class="brand-tagline">Practice facilitating a small-group math discussion</p>
+    </div>
+    <div id="session-chrome" class="session-chrome hidden" aria-live="polite">
+      <span id="session-summary" class="session-summary"></span>
+      <button type="button" id="end-session-btn" class="btn btn-ghost">End &amp; start over</button>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <!-- ========== SETUP WIZARD ========== -->
+    <div id="setup-view" class="setup-view">
+      <nav class="stepper" aria-label="Setup progress">
+        <ol class="stepper-list">
+          <li class="stepper-item is-current" data-step="1" aria-current="step">
+            <span class="stepper-index" aria-hidden="true">1</span>
+            <span class="stepper-label">Setup</span>
+          </li>
+          <li class="stepper-item" data-step="2">
+            <span class="stepper-index" aria-hidden="true">2</span>
+            <span class="stepper-label">Start</span>
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Step 1: Configure group -->
+      <section id="step-configure" class="setup-step" aria-labelledby="step-config-title">
+        <div class="step-intro">
+          <h1 id="step-config-title">Set up your group session</h1>
+          <p class="step-lede" id="step-config-lede">
+            You’ll play the teacher. Choose three simulated students and the math
+            problem they’ll discuss together.
+          </p>
+        </div>
+
+        <div id="config-group" class="config-block">
+          <div class="field">
+            <label for="group-preset">Group of students</label>
+            <p class="field-hint">
+              The phone-plans demo is the recommended first run—it follows a short script
+              that shows how group facilitation works.
+            </p>
+            <select id="group-preset">
+              <option value="demo">Recommended: Phone plans demo (Jordan, Sam &amp; Alex)</option>
+              <option value="jordan,sam,alex">Jordan, Sam &amp; Alex</option>
+              <option value="jordan,sam,morgan">Jordan, Sam &amp; Morgan</option>
+              <option value="custom">Custom — pick three students</option>
+            </select>
+          </div>
+
+          <div id="group-custom-picks" class="custom-picks hidden">
+            <div class="field">
+              <label for="group-p1">Student 1</label>
+              <select id="group-p1" class="group-profile-select"></select>
+            </div>
+            <div class="field">
+              <label for="group-p2">Student 2</label>
+              <select id="group-p2" class="group-profile-select"></select>
+            </div>
+            <div class="field">
+              <label for="group-p3">Student 3</label>
+              <select id="group-p3" class="group-profile-select"></select>
+            </div>
+            <p class="field-hint">Choose three different students.</p>
+          </div>
+
+          <div class="field">
+            <label for="group-task-select">Math problem</label>
+            <p class="field-hint">Pick a prepared problem, or write your own.</p>
+            <select id="group-task-select">
+              <option value="phone_plans_linear_01" selected>Phone plans — compare linear costs (recommended)</option>
+              <option value="frac_compare_01">Compare fractions — which is larger, 1/3 or 1/4?</option>
+              <option value="frac_add_common_01">Add fractions — 2/5 + 1/5</option>
+              <option value="frac_sub_unlike_01">Subtract fractions with different denominators</option>
+              <option value="frac_word_maria_pizza_01">Word problem — Maria’s pizza</option>
+              <option value="ratio_identify_01">Identify a ratio</option>
+              <option value="custom">Write my own problem…</option>
+            </select>
+          </div>
+
+          <div id="group-task-custom-wrap" class="field hidden">
+            <label for="group-task-input">Your math problem</label>
+            <textarea id="group-task-input" rows="3" placeholder="Type the problem students will discuss…"></textarea>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <span class="step-actions-spacer"></span>
+          <button type="button" id="prepare-btn" class="btn btn-primary">
+            Prepare session
+          </button>
+        </div>
+      </section>
+
+      <!-- Step 2: Ready -->
+      <section id="step-ready" class="setup-step hidden" aria-labelledby="step-ready-title">
+        <div class="step-intro">
+          <h1 id="step-ready-title">You’re ready to teach</h1>
+          <p class="step-lede">
+            Starting opens the conversation. A simulated student will respond
+            first—then it’s your turn to facilitate.
+          </p>
+        </div>
+
+        <div id="ready-summary" class="ready-summary" aria-live="polite"></div>
+
+        <div id="ready-group-extras" class="ready-extras hidden">
+          <div class="tip-block">
+            <h2 class="tip-title">How group facilitation works</h2>
+            <ul class="tip-list">
+              <li>Call someone by name (e.g. “Jordan, what do you think?”) to get a guaranteed reply.</li>
+              <li>Say “Discuss together” to open the floor—students decide whether to speak.</li>
+              <li>Say “Jordan, please watch” to keep a student listening while others talk.</li>
+            </ul>
+          </div>
+
+          <div id="demo-script-panel" class="demo-script-block">
+            <div class="panel-heading">
+              <h2 class="tip-title">Phone plans demo script</h2>
+              <button type="button" id="copy-demo-btn" class="btn btn-ghost btn-sm">Copy all</button>
+            </div>
+            <p class="field-hint">After you start, click a line to drop it into your message box.</p>
+            <ol id="demo-script-list" class="demo-script-list">
+              <li><span class="demo-passive">Start — the first student opens</span></li>
+              <li><button type="button" data-prompt="What do the 0.10 and 0.30 mean in each plan?">What do the 0.10 and 0.30 mean in each plan?</button></li>
+              <li><button type="button" data-prompt="Can someone represent Plan A and Plan B with equations or a table?">Can someone represent Plan A and Plan B with equations or a table?</button></li>
+              <li><button type="button" data-prompt="Discuss together — when is each plan better?">Discuss together — when is each plan better?</button></li>
+              <li><button type="button" data-prompt="Jordan, please watch while Alex and Sam compare approaches">Jordan, please watch while Alex and Sam compare approaches</button></li>
+              <li><button type="button" data-prompt="At how many texts do the plans cost the same?">At how many texts do the plans cost the same?</button></li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button type="button" id="back-to-setup-btn" class="btn btn-secondary">Back</button>
+          <button type="button" id="start-practice-btn" class="btn btn-primary" disabled>
+            Start practice
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- ========== SESSION / PRACTICE ========== -->
+    <div id="session-view" class="session-view hidden">
+      <div class="layout">
+        <aside class="sidebar" aria-label="Session details">
+          <div id="status" class="status" role="status" aria-live="polite">
+            Prepare a group and start practice.
+          </div>
+
+          <div id="sidebar-group" class="sidebar-stack">
+            <div id="group-roster-panel" class="insight-static">
+              <h2 class="insight-heading">Who’s in the group</h2>
+              <div id="group-roster">Prepare a session to see the roster.</div>
+            </div>
+
+            <div id="group-hint-panel" class="insight-static">
+              <h2 class="insight-heading">Quick prompts</h2>
+              <p class="hint" style="margin-top:0">
+                Address a student by name for a guaranteed reply. On open questions,
+                students decide whether to speak. Ask someone to watch to keep them listening.
+                Giving the full answer will not raise mastery — you’ll see a warning.
+              </p>
+              <div class="prompt-chips" aria-label="Quick teacher prompts">
+                <button type="button" class="prompt-chip" data-prompt="Discuss together">Discuss together</button>
+                <button type="button" class="prompt-chip" data-prompt="Jordan, please watch">Jordan, watch</button>
+              </div>
+            </div>
+
+            <div class="session-tools">
+              <button type="button" id="group-advance-btn" class="btn btn-ghost" disabled title="Optional: ask peers to keep talking if the discussion settled early">Nudge peers</button>
+              <button type="button" id="group-export-btn" class="btn btn-secondary" disabled>Export transcript</button>
+              <button type="button" id="group-reset-btn" class="btn btn-ghost" disabled>Reset group</button>
+            </div>
+          </div>
+        </aside>
+
+        <section class="chat-area" aria-label="Conversation">
+          <div id="chat-log" class="chat-log">
+            <div class="chat-empty" id="chat-empty">
+              <p class="chat-empty-title">Conversation will appear here</p>
+              <p class="chat-empty-desc">Start practice from the setup steps to begin teaching.</p>
+            </div>
+          </div>
+          <form id="chat-form" class="chat-form">
+            <label class="visually-hidden" for="message-input">Your teaching response</label>
+            <textarea
+              id="message-input"
+              placeholder="Type your teaching response…"
+              rows="2"
+              disabled
+            ></textarea>
+            <button type="submit" id="send-btn" class="btn btn-primary" disabled>Send</button>
+          </form>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/app.js?v=12"></script>
+</body>
+</html>

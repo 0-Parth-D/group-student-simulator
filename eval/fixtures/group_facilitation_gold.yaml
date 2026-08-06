@@ -1,0 +1,758 @@
+# Track C.0 — Facilitation gold set (orchestration layer O)
+# Roster default: Jordan + Sam + Alex (demo personalities).
+# Constraint fields are hard labels for parse_speak_constraints.
+# Soft fields guide self-select / authenticity notes (personality × knowledge).
+#
+# Personality anchors (demo_students.py):
+#   Jordan — E 0.9, C 0.3, N 0.6; confident-wrong; low fraction_equivalence;
+#            high volunteer / disagree when WRONG
+#   Sam    — E 0.3, C 0.7, N 0.8; anxious; strong procedures; speaks when
+#            addressed; hedges; less interrupt
+#   Alex   — E 0.2, C 0.6, N 0.4; quiet; stronger concepts; brief when speaks;
+#            low volunteer unless may_speak + framed idea
+
+roster:
+  profile_ids: [jordan, sam, alex]
+  display_names:
+    jordan: Jordan
+    sam: Sam
+    alex: Alex
+  # Facilitation cases are task-agnostic; both demo tasks are supported.
+  task_id: phone_plans_linear_01
+  task_ids: [phone_plans_linear_01, frac_word_maria_pizza_01]
+  task_note: >
+    Primary demo: phone plans (Plan A 20+0.1x vs Plan B 0.3x).
+    Also valid with Maria pizza leftover (frac_word_maria_pizza_01).
+
+personality_brief:
+  jordan:
+    role: "confident wrong opener / interrupter"
+    expect_voice: "guessy, assertive, often subtract-across or whole-number errors"
+  sam:
+    role: "anxious procedural peer"
+    expect_voice: "hedges, may correct procedure when addressed, not tutor-lecture"
+  alex:
+    role: "quiet competent"
+    expect_voice: "short, agreeable, waits to be invited"
+
+# ---------------------------------------------------------------------------
+# Hard constraint cases (regex baseline + future LLM bake-off)
+# ---------------------------------------------------------------------------
+cases:
+  # --- Direct address (must_speak) ---
+  - id: direct_sam_think
+    category: direct
+    message: "Sam, what do you think?"
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Sam (low E, high N) still must speak when named — force address."
+    soft_self_select: null
+
+  - id: direct_alex_brief
+    category: direct
+    message: "Alex, what do you think?"
+    must_speak: [alex]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Alex quiet but must answer when addressed; expect brief reply."
+    soft_self_select: null
+
+  - id: direct_jordan_first_step
+    category: direct
+    message: "Jordan, what's your first step?"
+    must_speak: [jordan]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Jordan high E + WRONG → confident wrong attempt (demo opener)."
+    soft_self_select: null
+
+  - id: direct_at_mention
+    category: direct
+    message: "@Sam do you agree?"
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Same as name address for anxious Sam."
+    soft_self_select: null
+
+  # --- Topic-only (Jordan mentioned, Sam acts) ---
+  - id: topic_jordan_method_sam_explains
+    category: topic_only
+    message: "Sam, explain why Jordan's method might be wrong"
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: >
+      Sam addresses Jordan's idea (topic). Sam has higher mastery on equivalence/
+      operations — may hedge-correct; must not sound like a teacher.
+    soft_self_select: null
+
+  - id: topic_agree_with_jordan
+    category: topic_only
+    message: "Sam, do you agree with Jordan?"
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: >
+      Sam may disagree with hedging (anxious + better knowledge). Jordan is topic only.
+    soft_self_select: null
+
+  - id: topic_explain_jordan_to_group
+    category: topic_only
+    message: "Explain why Jordan's method is wrong"
+    must_speak: []
+    may_speak: [jordan, sam, alex]
+    must_not_speak: []
+    mode: open
+    personality_note: >
+      No clear actor — open floor. Soft: Jordan (WRONG, high E) likely to defend;
+      Sam may hedge-join; Alex low volunteer.
+    soft_self_select:
+      prefer_first: jordan
+      expect_will_speak_includes: [jordan]
+      expect_quiet_bias: [alex]
+
+  # --- Discuss + watch (critical safety) ---
+  - id: discuss_watch_jordan_classic
+    category: discuss_exclude
+    hard: true
+    message: "Alex and Sam, discuss a bit — Jordan, please watch"
+    must_speak: []
+    may_speak: [alex, sam]
+    must_not_speak: [jordan]
+    mode: discuss
+    personality_note: >
+      Jordan must stay silent despite high E. Alex+Sam discuss; Alex still quieter
+      than Sam when both eligible.
+    soft_self_select:
+      expect_will_speak_includes: [alex, sam]
+      expect_will_speak_excludes: [jordan]
+      floor_at_least: 2
+
+  - id: discuss_watch_jordan_semicolon
+    category: discuss_exclude
+    hard: true
+    message: "Alex and Sam discuss; Jordan please watch"
+    must_speak: []
+    may_speak: [alex, sam]
+    must_not_speak: [jordan]
+    mode: discuss
+    personality_note: "Same safety case, alternate punctuation."
+    soft_self_select:
+      expect_will_speak_excludes: [jordan]
+      floor_at_least: 2
+
+  - id: discuss_jordan_listen
+    category: discuss_exclude
+    hard: true
+    message: "Sam and Alex, talk together. Jordan, just listen."
+    must_speak: []
+    may_speak: [sam, alex]
+    must_not_speak: [jordan]
+    mode: discuss
+    personality_note: "listen = watch for Jordan."
+    soft_self_select:
+      expect_will_speak_excludes: [jordan]
+
+  # --- Paraphrases (regex may fail; LLM bake-off targets) ---
+  - id: paraphrase_hang_back
+    category: paraphrase_exclude
+    hard: true
+    difficulty: hard_for_regex
+    message: "Jordan, hang back and listen while the others work it out"
+    must_speak: []
+    may_speak: [sam, alex]
+    must_not_speak: [jordan]
+    mode: discuss
+    personality_note: >
+      Intent: exclude Jordan. Regex may miss 'hang back'. Soft: Sam/Alex only.
+    soft_self_select:
+      expect_will_speak_excludes: [jordan]
+
+  - id: paraphrase_sit_this_one_out
+    category: paraphrase_exclude
+    hard: true
+    difficulty: hard_for_regex
+    message: "Alex and Sam, you two take this. Jordan sit this one out."
+    must_speak: []
+    may_speak: [alex, sam]
+    must_not_speak: [jordan]
+    mode: discuss
+    personality_note: "Exclude Jordan without classic watch/listen keyword."
+    soft_self_select:
+      expect_will_speak_excludes: [jordan]
+
+  - id: paraphrase_observe_quietly
+    category: paraphrase_exclude
+    hard: true
+    message: "Discuss among yourselves — Jordan observe quietly"
+    must_speak: []
+    may_speak: [sam, alex]
+    must_not_speak: [jordan]
+    mode: discuss
+    personality_note: "observe ≈ watch (regex should catch observe)."
+    soft_self_select:
+      expect_will_speak_excludes: [jordan]
+
+  # --- Open / critique (personality-driven soft select) ---
+  - id: open_anyone_disagree
+    category: critique
+    message: "Anyone disagree?"
+    must_speak: []
+    may_speak: [jordan, sam, alex]
+    must_not_speak: []
+    mode: critique
+    personality_note: >
+      Jordan WRONG + high E should lead; Alex quiet; Sam anxious less likely to
+      volunteer first.
+    soft_self_select:
+      prefer_first: jordan
+      expect_will_speak_includes: [jordan]
+      expect_quiet_bias: [alex]
+
+  - id: open_what_next
+    category: open
+    message: "What should we do next?"
+    must_speak: []
+    may_speak: [jordan, sam, alex]
+    must_not_speak: []
+    mode: open
+    personality_note: >
+      Not always Jordan. Soft: high-E WRONG still competitive; Alex low volunteer.
+    soft_self_select:
+      expect_quiet_bias: [alex]
+      not_always: jordan
+
+  - id: discuss_together_all
+    category: discuss
+    message: "Discuss together"
+    must_speak: []
+    may_speak: [jordan, sam, alex]
+    must_not_speak: []
+    mode: discuss
+    personality_note: >
+      Floor ≥2 speakers. Jordan likely; Sam may join; Alex may if policy forces floor.
+    soft_self_select:
+      floor_at_least: 2
+      expect_will_speak_includes: [jordan]
+
+  - id: discuss_named_pair
+    category: discuss
+    message: "Alex and Sam, discuss"
+    must_speak: []
+    may_speak: [alex, sam]
+    must_not_speak: []
+    mode: discuss
+    personality_note: "Jordan not invited — even high E must not barge (may_speak only)."
+    soft_self_select:
+      expect_will_speak_includes: [alex, sam]
+      expect_will_speak_excludes: [jordan]
+      floor_at_least: 2
+
+  # --- Multi-address direct ---
+  - id: direct_two_names
+    category: direct
+    message: "Sam and Alex, what do you think?"
+    must_speak: [sam, alex]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Both forced; order of mention Sam then Alex."
+    soft_self_select: null
+
+  # --- Pizza demo script sequence (constraint labels) ---
+  - id: demo_01_agree
+    category: demo_script
+    message: "Sam, do you agree with Jordan?"
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Pizza step 2 — Sam hedges vs Jordan's wrong opener."
+    soft_self_select: null
+
+  - id: demo_02_explain_wrong
+    category: demo_script
+    message: "Sam, explain why Jordan's method might be wrong"
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Pizza step 3 — Sam procedural; Jordan topic-only."
+    soft_self_select: null
+
+  - id: demo_03_alex
+    category: demo_script
+    message: "Alex, what do you think?"
+    must_speak: [alex]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Pizza step 4 — invite quiet Alex."
+    soft_self_select: null
+
+  - id: demo_04_watch
+    category: demo_script
+    hard: true
+    message: "Alex and Sam, discuss a bit — Jordan, please watch"
+    must_speak: []
+    may_speak: [alex, sam]
+    must_not_speak: [jordan]
+    mode: discuss
+    personality_note: "Pizza step 5 — critical observer case."
+    soft_self_select:
+      expect_will_speak_excludes: [jordan]
+      floor_at_least: 2
+
+  - id: demo_05_whole_pizza
+    category: demo_script
+    message: "So if those are both gone, what's left of the whole pizza?"
+    must_speak: []
+    may_speak: [jordan, sam, alex]
+    must_not_speak: []
+    mode: open
+    personality_note: >
+      Reframe leftover. Soft: any eligible; Jordan may jump back in (high E + WRONG).
+    soft_self_select:
+      expect_quiet_bias: [alex]
+
+  # --- More direct address variants ---
+  - id: direct_ask_jordan
+    category: direct
+    message: "Ask Jordan to share a first guess"
+    must_speak: [jordan]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "ask Jordan → actor; confident-wrong guess expected."
+    soft_self_select: null
+
+  - id: direct_jordan_can_you
+    category: direct
+    message: "Jordan can you show how you got that?"
+    must_speak: [jordan]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Force Jordan to defend WRONG procedure."
+    soft_self_select: null
+
+  - id: direct_sam_how
+    category: direct
+    message: "Sam, how would you find a common denominator?"
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Sam high C / procedures — scaffolded invite, may still hedge."
+    soft_self_select: null
+
+  - id: direct_alex_summarize
+    category: direct
+    message: "Alex, can you summarize what Sam said?"
+    must_speak: [alex]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Quiet Alex invited to restate; expect brief."
+    soft_self_select: null
+
+  - id: direct_colon_sam
+    category: direct
+    difficulty: hard_for_regex
+    message: "Sam: walk us through your steps"
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Name: form — Sam must speak. Regex may miss colon address."
+    soft_self_select: null
+
+  - id: direct_at_jordan
+    category: direct
+    message: "@Jordan what is left of the whole?"
+    must_speak: [jordan]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "At-mention Jordan on leftover framing."
+    soft_self_select: null
+
+  - id: direct_three_round_robin
+    category: direct
+    difficulty: hard_for_regex
+    message: "Jordan, Sam, and Alex, each give one idea"
+    must_speak: [jordan, sam, alex]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "All three forced; regex may only catch first actor."
+    soft_self_select: null
+
+  # --- Topic-only / build-on peers ---
+  - id: topic_alex_build_on_sam
+    category: topic_only
+    message: "Alex, can you build on Sam's idea?"
+    must_speak: [alex]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Sam is topic; Alex must speak (invite quiet student)."
+    soft_self_select: null
+
+  - id: topic_sam_disagree_jordan_idea
+    category: topic_only
+    message: "Sam, do you disagree with Jordan's answer?"
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Jordan topic; Sam hedges disagreement from stronger mastery."
+    soft_self_select: null
+
+  - id: topic_tell_jordan_why
+    category: topic_only
+    message: "Sam, explain to Jordan why the bottoms have to match"
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "explain to Jordan → Jordan not speaker."
+    soft_self_select: null
+
+  - id: topic_method_from_jordan
+    category: topic_only
+    message: "Alex, what is wrong with the method from Jordan?"
+    must_speak: [alex]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "method from Jordan = topic-only."
+    soft_self_select: null
+
+  - id: topic_idea_by_sam_open
+    category: topic_only
+    message: "What do people think about the idea by Sam?"
+    must_speak: []
+    may_speak: [jordan, sam, alex]
+    must_not_speak: []
+    mode: open
+    personality_note: >
+      Sam topic-only. Soft: Jordan may challenge; Alex quiet; Sam may clarify if selected.
+    soft_self_select:
+      prefer_first: jordan
+      expect_quiet_bias: [alex]
+
+  # --- Exclude other students (not only Jordan) ---
+  - id: discuss_exclude_sam_watch
+    category: discuss_exclude
+    hard: true
+    message: "Jordan and Alex discuss; Sam please watch"
+    must_speak: []
+    may_speak: [jordan, alex]
+    must_not_speak: [sam]
+    mode: discuss
+    personality_note: >
+      Anxious Sam forced silent. Jordan high E will dominate discuss with quiet Alex.
+    soft_self_select:
+      expect_will_speak_excludes: [sam]
+      expect_will_speak_includes: [jordan]
+      floor_at_least: 2
+
+  - id: discuss_exclude_alex_listen
+    category: discuss_exclude
+    hard: true
+    message: "Jordan and Sam, talk together. Alex, just listen."
+    must_speak: []
+    may_speak: [jordan, sam]
+    must_not_speak: [alex]
+    mode: discuss
+    personality_note: "Quiet Alex already low volunteer — still must not speak if listening."
+    soft_self_select:
+      expect_will_speak_excludes: [alex]
+      floor_at_least: 2
+
+  - id: discuss_exclude_two_watch
+    category: discuss_exclude
+    hard: true
+    difficulty: hard_for_regex
+    message: "Sam, explain your steps. Jordan and Alex, please watch."
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: [jordan, alex]
+    mode: direct
+    personality_note: >
+      Only Sam speaks; both others observe. Regex may only attach watch to the last name.
+    soft_self_select: null
+
+  - id: open_not_jordan
+    category: paraphrase_exclude
+    hard: true
+    difficulty: hard_for_regex
+    message: "Someone else — not Jordan — what do you think?"
+    must_speak: []
+    may_speak: [sam, alex]
+    must_not_speak: [jordan]
+    mode: open
+    personality_note: "not Jordan → exclude high-E interrupter; soft prefer Sam over Alex."
+    soft_self_select:
+      expect_will_speak_excludes: [jordan]
+      expect_quiet_bias: [alex]
+
+  # --- More discuss / group cues ---
+  - id: discuss_talk_in_group
+    category: discuss
+    message: "Talk in your group for a minute"
+    must_speak: []
+    may_speak: [jordan, sam, alex]
+    must_not_speak: []
+    mode: discuss
+    personality_note: "Full roster discuss; Jordan likely leads; Alex quiet."
+    soft_self_select:
+      floor_at_least: 2
+      expect_will_speak_includes: [jordan]
+      expect_quiet_bias: [alex]
+
+  - id: discuss_among_yourselves
+    category: discuss
+    message: "Work it out among yourselves"
+    must_speak: []
+    may_speak: [jordan, sam, alex]
+    must_not_speak: []
+    mode: discuss
+    personality_note: "among yourselves cue; same soft personality pattern."
+    soft_self_select:
+      floor_at_least: 2
+
+  - id: discuss_jordan_sam_only
+    category: discuss
+    message: "Jordan and Sam, discuss together"
+    must_speak: []
+    may_speak: [jordan, sam]
+    must_not_speak: []
+    mode: discuss
+    personality_note: "Alex not invited (quiet stays out); Jordan+Sam floor."
+    soft_self_select:
+      expect_will_speak_excludes: [alex]
+      floor_at_least: 2
+
+  - id: discuss_as_a_group
+    category: discuss
+    message: "Work it out as a group"
+    must_speak: []
+    may_speak: [jordan, sam, alex]
+    must_not_speak: []
+    mode: discuss
+    personality_note: "as a group cue."
+    soft_self_select:
+      floor_at_least: 2
+
+  # --- Critique / challenge ---
+  - id: critique_challenge_idea
+    category: critique
+    message: "Does anyone want to challenge that idea?"
+    must_speak: []
+    may_speak: [jordan, sam, alex]
+    must_not_speak: []
+    mode: critique
+    personality_note: "Jordan WRONG high E likely first; Sam may hedge-challenge if pressed."
+    soft_self_select:
+      prefer_first: jordan
+      expect_quiet_bias: [alex]
+
+  - id: critique_different_answer
+    category: critique
+    message: "Anyone have a different answer?"
+    must_speak: []
+    may_speak: [jordan, sam, alex]
+    must_not_speak: []
+    mode: critique
+    personality_note: "Different answer cue — Jordan doubles down or Sam offers procedure."
+    soft_self_select:
+      prefer_first: jordan
+
+  - id: critique_sam_challenge_jordan
+    category: critique
+    message: "Sam, challenge Jordan's steps if you see a problem"
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Direct Sam + topic Jordan; critique word present but actor is Sam."
+    soft_self_select: null
+
+  # --- Scaffold / PST facilitation style ---
+  - id: scaffold_sam_whole
+    category: direct
+    message: "Sam, what's the whole before anything is eaten?"
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Part-whole scaffold to procedural Sam."
+    soft_self_select: null
+
+  - id: scaffold_alex_picture
+    category: direct
+    message: "Alex, can you draw the pizza in eighths?"
+    must_speak: [alex]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Invite quiet Alex with concrete action."
+    soft_self_select: null
+
+  - id: scaffold_jordan_stuck
+    category: direct
+    message: "Jordan, what are you stuck on?"
+    must_speak: [jordan]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Jordan may deny stuck (confident-wrong) rather than ask for help."
+    soft_self_select: null
+
+  - id: open_who_can_help
+    category: open
+    message: "Who can help the group check the leftover?"
+    must_speak: []
+    may_speak: [jordan, sam, alex]
+    must_not_speak: []
+    mode: open
+    personality_note: >
+      Soft: Sam may volunteer if mastery high; Jordan may jump in wrongly; Alex quiet.
+    soft_self_select:
+      expect_quiet_bias: [alex]
+
+  # --- More paraphrases / hard_for_regex ---
+  - id: paraphrase_take_a_breather
+    category: paraphrase_exclude
+    hard: true
+    difficulty: hard_for_regex
+    message: "Jordan take a breather — Alex and Sam, talk this through"
+    must_speak: []
+    may_speak: [alex, sam]
+    must_not_speak: [jordan]
+    mode: discuss
+    personality_note: "take a breather ≈ exclude; regex may miss."
+    soft_self_select:
+      expect_will_speak_excludes: [jordan]
+
+  - id: paraphrase_hands_off
+    category: paraphrase_exclude
+    hard: true
+    difficulty: hard_for_regex
+    message: "Hands off for a moment, Jordan. Sam and Alex discuss."
+    must_speak: []
+    may_speak: [sam, alex]
+    must_not_speak: [jordan]
+    mode: discuss
+    personality_note: "hands off paraphrase for watch."
+    soft_self_select:
+      expect_will_speak_excludes: [jordan]
+
+  - id: paraphrase_mute_jordan
+    category: paraphrase_exclude
+    hard: true
+    difficulty: hard_for_regex
+    message: "Mute Jordan for this round — everyone else discuss"
+    must_speak: []
+    may_speak: [sam, alex]
+    must_not_speak: [jordan]
+    mode: discuss
+    personality_note: "mute = exclude; hard for keyword regex."
+    soft_self_select:
+      expect_will_speak_excludes: [jordan]
+      floor_at_least: 2
+
+  - id: paraphrase_only_sam_floor
+    category: paraphrase_exclude
+    hard: true
+    difficulty: hard_for_regex
+    message: "Only Sam has the floor right now"
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: [jordan, alex]
+    mode: direct
+    personality_note: "Implicit exclude others; LLM should infer must_not."
+    soft_self_select: null
+
+  - id: paraphrase_let_alex_try
+    category: paraphrase_exclude
+    hard: true
+    difficulty: hard_for_regex
+    message: "Let Alex try without interruption from Jordan or Sam"
+    must_speak: [alex]
+    may_speak: []
+    must_not_speak: [jordan, sam]
+    mode: direct
+    personality_note: "Protect quiet Alex; exclude interrupter Jordan and Sam."
+    soft_self_select: null
+
+  - id: paraphrase_stay_quiet_jordan
+    category: paraphrase_exclude
+    hard: true
+    difficulty: hard_for_regex
+    message: "Jordan stay quiet while Sam explains"
+    must_speak: [sam]
+    may_speak: []
+    must_not_speak: [jordan]
+    mode: direct
+    personality_note: >
+      Intent: Sam speaks, Jordan excluded. Regex may classify as open+exclude only.
+    soft_self_select: null
+
+  # --- Mixed / edge facilitation ---
+  - id: edge_empty_open_check
+    category: open
+    message: "Okay class, thoughts?"
+    must_speak: []
+    may_speak: [jordan, sam, alex]
+    must_not_speak: []
+    mode: open
+    personality_note: "Vague open floor — Jordan likely; Alex quiet bias."
+    soft_self_select:
+      prefer_first: jordan
+      expect_quiet_bias: [alex]
+
+  - id: edge_thanks_sam_next
+    category: open
+    message: "Thanks Sam. What should we do next?"
+    must_speak: []
+    may_speak: [jordan, sam, alex]
+    must_not_speak: []
+    mode: open
+    personality_note: >
+      Sam mentioned as thanks (topic-ish); not must_speak. Soft: downweight Sam if just spoke.
+    soft_self_select:
+      expect_quiet_bias: [alex]
+
+  - id: edge_jordan_then_sam
+    category: direct
+    message: "Jordan, go first. Then Sam, respond."
+    must_speak: [jordan, sam]
+    may_speak: []
+    must_not_speak: []
+    mode: direct
+    personality_note: "Sequential must_speak both; Alex out."
+    soft_self_select: null
+
+  - id: edge_be_quiet_alex
+    category: discuss_exclude
+    hard: true
+    message: "Discuss together — Alex be quiet"
+    must_speak: []
+    may_speak: [jordan, sam]
+    must_not_speak: [alex]
+    mode: discuss
+    personality_note: "be quiet exclude on already-quiet Alex."
+    soft_self_select:
+      expect_will_speak_excludes: [alex]
+      floor_at_least: 2

@@ -1,0 +1,59 @@
+{
+  "attributes": [
+    {
+      "id": "Abstraction",
+      "name": "Mathematical Abstraction",
+      "description": "Represent problems with symbols, variables, and general structures.",
+      "weak_error_templates": [
+        "Avoids symbolic setup; stays with concrete numbers only",
+        "Writes an expression that doesn't match the structure of the problem"
+      ]
+    },
+    {
+      "id": "Logical_Reasoning",
+      "name": "Logical Reasoning",
+      "description": "Follow multi-step deductive chains and justify steps.",
+      "weak_error_templates": [
+        "Skips a logical step or reverses order of operations",
+        "Claims two unequal results are 'basically the same'"
+      ]
+    },
+    {
+      "id": "Modeling",
+      "name": "Mathematical Modeling",
+      "description": "Translate word problems and contexts into mathematical form.",
+      "weak_error_templates": [
+        "Misreads what the question is asking",
+        "Sets up the wrong equation or diagram from the story"
+      ]
+    },
+    {
+      "id": "Intuitive_Imagination",
+      "name": "Intuitive Imagination",
+      "description": "Use spatial, visual, and intuitive sense-making (number lines, diagrams).",
+      "weak_error_templates": [
+        "Number line or diagram drawn incorrectly",
+        "Relies on gut feel without checking scale or units"
+      ]
+    },
+    {
+      "id": "Operation",
+      "name": "Mathematical Operation",
+      "description": "Execute arithmetic and algebraic procedures accurately.",
+      "weak_error_templates": [
+        "Arithmetic slip after correct method chosen",
+        "Applies operation to wrong part of the expression"
+      ]
+    },
+    {
+      "id": "Data_Analysis",
+      "name": "Data Analysis",
+      "description": "Interpret tables, graphs, and data displays.",
+      "weak_error_templates": [
+        "Reads wrong row or column from a table",
+        "Compares values without matching units"
+      ]
+    }
+  ],
+  "levels": ["low", "med", "high"]
+}

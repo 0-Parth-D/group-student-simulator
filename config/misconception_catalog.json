@@ -1,0 +1,374 @@
+{
+  "_meta": {
+    "version": "2.0",
+    "sources": [
+      "NCIEA LPF 5-8 NO, PRF, and SE strands — structural source for construct_id (nciea.org/wp-content/uploads/2022/07/Math_LPF_KH11.pdf)",
+      "DLM Grade 6-7 Essential Elements — M.EE.6.NS.1, M.EE.6.RP.1, M.EE.7.RP.1 (dynamiclearningmaps.org)",
+      "Lamon 5-interpretation fraction LP (part-whole / quotient / measurement / ratio / operator)"
+    ],
+    "notes": "construct_id values must exist in config/knowledge_graph.yaml. Phone-plan entries are keyed to the LPF PRF constructs added in KG v2. detection_patterns are regex used by deterministic expert_slip/persona checks; semantic paraphrase matching over misconception_instances is future work."
+  },
+  "misconceptions": [
+    {
+      "id": "pw_larger_denominator_larger_fraction",
+      "construct_id": "part_whole",
+      "stack_level": 1,
+      "source": "DLM M.EE.6.NS.1 — IP/DP linkage level; LPF M.NO-1",
+      "error_type": "whole_number_interference",
+      "description": "Student treats fraction as two unrelated whole numbers. Concludes 1/4 > 1/3 because 4 > 3.",
+      "example_wrong_reply": "1/4 is bigger because 4 is bigger than 3.",
+      "behavior_tag": "CONFUSED",
+      "prompt_cue": "You see the denominator as just a regular number and bigger means more.",
+      "detection_patterns": [
+        "1\\s*/\\s*4 is (bigger|larger)",
+        "4 is (bigger|larger) than 3",
+        "bigger (denominator|bottom).{0,40}(bigger|larger)\\s+(fraction|piece|share)",
+        "(denominator|bottom) is (bigger|larger).{0,40}(so|means).{0,20}(bigger|larger)"
+      ]
+    },
+    {
+      "id": "pw_adds_numerators_and_denominators",
+      "construct_id": "part_whole",
+      "stack_level": 1,
+      "source": "DLM M.EE.6.NS.1 — DP linkage; LPF M.NO-2",
+      "error_type": "procedural_over-generalisation",
+      "description": "Student adds both numerators and denominators independently (2/5 + 1/5 = 3/10).",
+      "example_wrong_reply": "2 plus 1 is 3 and 5 plus 5 is 10, so 3/10.",
+      "behavior_tag": "WRONG",
+      "prompt_cue": "You add the top numbers together AND the bottom numbers together just like regular addition.",
+      "detection_patterns": [
+        "3\\s*/\\s*10",
+        "adds? (both )?(the )?(tops? and bottoms?|numerators? and denominators?)",
+        "\\d+\\s*plus\\s*\\d+.*\\d+\\s*plus\\s*\\d+"
+      ]
+    },
+    {
+      "id": "feq_subtract_across_bar",
+      "construct_id": "fraction_equivalence",
+      "stack_level": 1,
+      "source": "DLM M.EE.6.NS.1 — DP/PP boundary; LPF M.NO-2",
+      "error_type": "additive_thinking",
+      "description": "To subtract fractions, student subtracts numerators and denominators directly. 5/6 - 1/3 = 4/3.",
+      "example_wrong_reply": "5 minus 1 is 4, 6 minus 3 is 3, answer is 4/3.",
+      "behavior_tag": "WRONG",
+      "prompt_cue": "You subtract the top from the top and the bottom from the bottom, just like you do with addition.",
+      "detection_patterns": [
+        "4\\s*/\\s*3",
+        "subtract(?:s|ing)? (the )?(tops? and bottoms?|numerators? and denominators?)",
+        "\\d+\\s*minus\\s*\\d+.*\\d+\\s*minus\\s*\\d+"
+      ]
+    },
+    {
+      "id": "feq_wrong_equivalent_fraction",
+      "construct_id": "fraction_equivalence",
+      "stack_level": 2,
+      "source": "DLM M.EE.6.NS.1 — PP linkage level",
+      "error_type": "procedural_slip",
+      "description": "Student identifies the LCD correctly but converts the fraction incorrectly (1/3 → 1/6 instead of 2/6).",
+      "example_wrong_reply": "LCD is 6. So 1/3 becomes 1/6. 5/6 minus 1/6 equals 4/6.",
+      "behavior_tag": "PARTIAL",
+      "prompt_cue": "You know you need the same bottom number but you forget to multiply the top when you change the bottom."
+    },
+    {
+      "id": "feq_no_simplification",
+      "construct_id": "fraction_equivalence",
+      "stack_level": 2,
+      "source": "LPF M.NO-2 — Successor level skill",
+      "error_type": "incomplete_procedure",
+      "description": "Correct computation but student does not simplify (e.g. leaves answer as 3/6 instead of 1/2).",
+      "example_wrong_reply": "5/6 minus 2/6 equals 3/6.",
+      "behavior_tag": "PARTIAL",
+      "prompt_cue": "You get the right fraction but simplifying feels unnecessary to you — the answer looks fine."
+    },
+    {
+      "id": "rc_reverses_ratio_order",
+      "construct_id": "ratio_concept",
+      "stack_level": 1,
+      "source": "DLM M.EE.6.RP.1 — PP linkage (1:n ratio)",
+      "error_type": "order_confusion",
+      "description": "Student reverses ratio order (blue:red instead of red:blue).",
+      "example_wrong_reply": "The ratio is 5:2 because there are 5 blue and 2 red.",
+      "behavior_tag": "WRONG",
+      "prompt_cue": "You write the numbers in the order you see them or say them, not the order asked.",
+      "detection_patterns": [
+        "5\\s*:\\s*2",
+        "\\bblue\\s*(:|to)\\s*red\\b",
+        "(other way around|reversed|wrong order|flip(?:ped)? (?:the )?order)"
+      ]
+    },
+    {
+      "id": "rc_part_to_whole",
+      "construct_id": "ratio_concept",
+      "stack_level": 1,
+      "source": "Lamon fraction-as-ratio interpretation; LPF M.NO-1",
+      "error_type": "part_whole_confusion",
+      "description": "Student expresses ratio as part-to-whole (2:7) instead of part-to-part (2:5).",
+      "example_wrong_reply": "2 red out of 7 total, so 2:7.",
+      "behavior_tag": "PARTIAL",
+      "prompt_cue": "You compare each part to the whole, not to the other part.",
+      "detection_patterns": [
+        "2\\s*:\\s*7",
+        "out of\\s*(the )?total",
+        "out of\\s*7\\b",
+        "2\\s*(red )?out of\\s*7"
+      ]
+    },
+    {
+      "id": "rc_fraction_label_only",
+      "construct_id": "ratio_concept",
+      "stack_level": 2,
+      "source": "DLM M.EE.6.RP.1 — T linkage",
+      "error_type": "surface_only",
+      "description": "Student gives correct notation but treats ratio as a fraction without multiplicative meaning.",
+      "example_wrong_reply": "2/5, like a fraction.",
+      "behavior_tag": "PARTIAL",
+      "prompt_cue": "You write 2/5 because it looks like a fraction. You don't think about it as a comparison between two groups."
+    },
+    {
+      "id": "req_additive_scaling",
+      "construct_id": "ratio_equivalence",
+      "stack_level": 1,
+      "source": "LPF M.NO.2d (additive vs multiplicative situations); M.PRF.2a pattern generalisation",
+      "error_type": "additive_instead_of_multiplicative",
+      "description": "Student adds a constant to both parts of a ratio instead of multiplying (e.g. 2:3, 4:5 instead of 4:6).",
+      "example_wrong_reply": "2:3 then 4:5 because I added 2 to each.",
+      "behavior_tag": "WRONG",
+      "prompt_cue": "You find the pattern by adding the same number each time, just like in a number sequence.",
+      "detection_patterns": [
+        "4\\s*:\\s*5",
+        "add(?:ed|ing)?\\s+\\d+\\s+to each",
+        "add(?:ed|ing)?\\s+\\d+\\s+to both",
+        "I added \\d+"
+      ]
+    },
+    {
+      "id": "req_scales_numerator_only",
+      "construct_id": "ratio_equivalence",
+      "stack_level": 2,
+      "source": "DLM M.EE.6.RP.1 — Successor linkage",
+      "error_type": "incomplete_scaling",
+      "description": "Student doubles the first term but forgets to double the second (4:3 instead of 4:6).",
+      "example_wrong_reply": "I multiplied 2 by 2 to get 4. I left the 3 alone. So 4:3.",
+      "behavior_tag": "PARTIAL",
+      "prompt_cue": "You remember to scale one number but forget both parts have to be scaled the same way."
+    },
+    {
+      "id": "ur_inverts_ratio",
+      "construct_id": "unit_rate",
+      "stack_level": 1,
+      "source": "LPF M.PRF.1e — representing and computing unit rates",
+      "error_type": "ratio_inversion",
+      "description": "Student divides in the wrong direction (hours/miles instead of miles/hours).",
+      "example_wrong_reply": "3 divided by 150 equals 0.02.",
+      "behavior_tag": "WRONG",
+      "prompt_cue": "You pick a division direction without thinking about what the unit rate means. You just pick the smaller divided by the bigger.",
+      "detection_patterns": [
+        "3\\s*/\\s*150",
+        "3\\s*divided by\\s*150",
+        "0\\.02\\b",
+        "hours?\\s*(divided by|/)\\s*miles"
+      ]
+    },
+    {
+      "id": "ur_no_unit_label",
+      "construct_id": "unit_rate",
+      "stack_level": 2,
+      "source": "LPF M.NO.3a — justifying solutions; M.PRF.1e unit rates (6.RP-2)",
+      "error_type": "missing_unit",
+      "description": "Student computes the correct number but drops the unit (writes 50 instead of 50 miles/hour).",
+      "example_wrong_reply": "150 divided by 3 equals 50.",
+      "behavior_tag": "PARTIAL",
+      "prompt_cue": "You do the maths correctly but you don't think about what the number means or what units it has."
+    },
+    {
+      "id": "ur_no_attempt_shutdown",
+      "construct_id": "unit_rate",
+      "stack_level": 0,
+      "source": "Emotional modeling — anxious/shutdown persona",
+      "error_type": "avoidance",
+      "description": "Student says they don't know where to start and shuts down without attempting.",
+      "example_wrong_reply": "I don't even know where to start. Can we skip it?",
+      "behavior_tag": "CONFUSED",
+      "prompt_cue": "You feel overwhelmed and just give up, saying you don't understand.",
+      "detection_patterns": [
+        "don'?t (even )?know where to start",
+        "can we skip",
+        "i give up",
+        "too hard"
+      ]
+    },
+    {
+      "id": "ur_rate_as_flat_add",
+      "construct_id": "additive_vs_multiplicative",
+      "stack_level": 1,
+      "source": "LPF M.NO.2d — contrasting situations as additive or multiplicative; phone-plans PST scenario",
+      "error_type": "rate_as_constant_addend",
+      "description": "Student treats '$0.10 per text' as adding 10 cents once (a flat amount) instead of a constant rate times number of texts.",
+      "example_wrong_reply": "Plan A is just 20 dollars plus 10 cents, so like 20.10 total.",
+      "behavior_tag": "WRONG",
+      "prompt_cue": "You hear '10 cents per text' and add 10 cents once instead of multiplying by how many texts.",
+      "detection_patterns": [
+        "20\\.10",
+        "plus 10 cents",
+        "add(?:s|ing)?\\s+10\\b",
+        "just 20 dollars plus 10"
+      ]
+    },
+    {
+      "id": "ur_cents_vs_dollars_slope",
+      "construct_id": "unit_rate",
+      "stack_level": 1,
+      "source": "LPF M.PRF.1e — unit rates in like or different units; phone-plans PST scenario",
+      "error_type": "unit_scale_error",
+      "description": "Student writes 10x instead of 0.1x (or 30x instead of 0.3x), confusing cents with dollars in the rate.",
+      "example_wrong_reply": "Plan A is 20 + 10x because each text is 10 cents.",
+      "behavior_tag": "WRONG",
+      "prompt_cue": "You use 10 instead of 0.1 because the problem said ten cents, and you forget dollars.",
+      "detection_patterns": [
+        "\\b20\\s*\\+\\s*10\\s*x\\b",
+        "(?<![.\\d])10\\s*x\\b",
+        "20\\s*\\+\\s*10"
+      ]
+    },
+    {
+      "id": "pr_compare_one_x_only",
+      "construct_id": "rate_comparison",
+      "stack_level": 2,
+      "source": "LPF M.PRF.1c — comparing two rates for best value; phone-plans PST scenario",
+      "error_type": "incomplete_comparison",
+      "description": "Student compares plans at one or two text counts and never sets them equal to find the crossover.",
+      "example_wrong_reply": "At 50 texts Plan B is cheaper, so Plan B is always better.",
+      "behavior_tag": "PARTIAL",
+      "prompt_cue": "You pick a few numbers and decide from those, without finding when the two plans cost the same."
+    },
+    {
+      "id": "pr_slope_coefficient_only",
+      "construct_id": "symbolic_modeling",
+      "stack_level": 2,
+      "source": "LPF M.PRF.1f — symbolic expressions tied to the quantitative relationships in a situation; phone-plans PST scenario",
+      "error_type": "symbol_without_meaning",
+      "description": "Student can write 20+0.1x and 0.3x but cannot explain what 0.1 or 0.3 means in context (calls them 'the coefficient').",
+      "example_wrong_reply": "It's 20 plus 0.1x. The 0.1 is just the coefficient.",
+      "behavior_tag": "PARTIAL",
+      "prompt_cue": "You can write the equation but you don't know what the 0.1 means in the phone plan story.",
+      "detection_patterns": [
+        "just the coefficient",
+        "the coefficient"
+      ]
+    },
+    {
+      "id": "pr_ignores_monthly_fee",
+      "construct_id": "additive_vs_multiplicative",
+      "stack_level": 1,
+      "source": "LPF M.NO.2d — fixed amount not separated from per-unit rate; phone-plans PST scenario",
+      "error_type": "omitted_fixed_cost",
+      "description": "Student models Plan A as only 0.1x (or only the per-text rate) and forgets the $20 monthly fee.",
+      "example_wrong_reply": "Plan A is just 0.1 times texts, same idea as Plan B but cheaper per text.",
+      "behavior_tag": "WRONG",
+      "prompt_cue": "You forget the $20 monthly fee and only use the per-text part for Plan A.",
+      "detection_patterns": [
+        "plan a is (just |only )?0\\.1",
+        "only 0\\.1x"
+      ]
+    },
+    {
+      "id": "pr_lower_rate_always_wins",
+      "construct_id": "rate_comparison",
+      "stack_level": 1,
+      "source": "LPF M.PRF.1c — evaluating two rates for a given situation; phone-plans PST scenario",
+      "error_type": "ignores_fixed_cost_tradeoff",
+      "description": "Student concludes Plan A is always better because $0.10/text is less than $0.30/text, ignoring when the monthly fee makes Plan A more expensive.",
+      "example_wrong_reply": "Plan A is always better because ten cents is less than thirty cents per text.",
+      "behavior_tag": "WRONG",
+      "prompt_cue": "You only compare the per-text prices and decide the cheaper rate always wins.",
+      "detection_patterns": [
+        "always better",
+        "ten cents is less",
+        "cheaper (rate|per text).{0,40}always",
+        "always.{0,40}(cheaper|better).{0,40}(per text|rate)"
+      ]
+    },
+    {
+      "id": "pr_swaps_plan_rates",
+      "construct_id": "symbolic_modeling",
+      "stack_level": 1,
+      "source": "LPF M.SE.1f — expressions that correspond to the given situation; phone-plans PST scenario",
+      "error_type": "swapped_parameters",
+      "description": "Student assigns Plan A's rate to Plan B or vice versa (e.g. Plan A = 0.3x, Plan B = 20+0.1x).",
+      "example_wrong_reply": "Plan A is 0.3x and Plan B is 20 plus 0.1x... I think I mixed them up but whatever.",
+      "behavior_tag": "WRONG",
+      "prompt_cue": "You mix up which plan has the monthly fee and which has the higher per-text rate.",
+      "detection_patterns": [
+        "plan a is 0\\.3",
+        "plan b is 20\\s*\\+\\s*0\\.1",
+        "mixed them up",
+        "swapped (the )?(plans|rates)"
+      ]
+    },
+    {
+      "id": "pr_algebra_crossover_slip",
+      "construct_id": "symbolic_modeling",
+      "stack_level": 2,
+      "source": "LPF M.PRF.2d — solving linear equations and explaining the reasoning; phone-plans PST scenario",
+      "error_type": "algebra_error",
+      "description": "Student sets 20+0.1x = 0.3x but solves incorrectly (e.g. concludes x=20 or x=50 instead of 100).",
+      "example_wrong_reply": "20 plus 0.1x equals 0.3x, so x is 20 texts.",
+      "behavior_tag": "PARTIAL",
+      "prompt_cue": "You know to set the plans equal but you mess up the algebra and get the wrong crossover."
+    },
+    {
+      "id": "pr_fee_added_to_both",
+      "construct_id": "additive_vs_multiplicative",
+      "stack_level": 2,
+      "source": "LPF M.NO.2d — fixed amount attributed to a situation that does not have one; phone-plans PST scenario",
+      "error_type": "spurious_fixed_cost",
+      "description": "Student adds a $20 fee to both plans or invents a fee for Plan B that is not in the problem.",
+      "example_wrong_reply": "Both plans have like a 20 dollar fee, then Plan A adds 0.1x and Plan B adds 0.3x.",
+      "behavior_tag": "PARTIAL",
+      "prompt_cue": "You put a monthly fee on both plans even though only Plan A has one."
+    },
+    {
+      "id": "ur_per_month_not_per_text",
+      "construct_id": "unit_rate",
+      "stack_level": 1,
+      "source": "LPF M.PRF.1e — rates measured in like or different units; phone-plans PST scenario",
+      "error_type": "wrong_rate_unit",
+      "description": "Student treats $0.10 / $0.30 as a monthly charge or total bill piece rather than a per-text rate.",
+      "example_wrong_reply": "Plan A is 20 plus another 0.10 for the month, and Plan B is just 0.30 for the month.",
+      "behavior_tag": "WRONG",
+      "prompt_cue": "You treat the 10 cents and 30 cents like monthly amounts, not costs that grow with each text.",
+      "detection_patterns": [
+        "for the month",
+        "(0\\.10|0\\.30|ten cents|thirty cents).{0,30}(month|monthly)",
+        "(month|monthly).{0,30}(0\\.10|0\\.30|ten cents)",
+        "another 0\\.10 for the month"
+      ]
+    },
+    {
+      "id": "lr_assumes_proportional_doubling",
+      "construct_id": "linear_relationship",
+      "stack_level": 2,
+      "source": "LPF M.PRF.1b — distinguishing linear from nonlinear (and proportional) relationships in tables and graphs",
+      "error_type": "proportional_over-generalisation",
+      "description": "Student assumes every plan scales like a ratio table: doubling the number of texts doubles the bill, which is false whenever there is a monthly fee.",
+      "example_wrong_reply": "If 50 texts costs $25 on Plan A, then 100 texts costs $50.",
+      "behavior_tag": "WRONG",
+      "prompt_cue": "You scale the whole bill up and down like a ratio table, because that is how every rate problem has worked so far."
+    },
+    {
+      "id": "lr_line_starts_at_origin",
+      "construct_id": "linear_relationship",
+      "stack_level": 1,
+      "source": "LPF M.PRF.2b — relating representations and identifying functions as linear or nonlinear",
+      "error_type": "missing_intercept_in_representation",
+      "description": "Student draws or describes both plans as lines through (0, 0), so a plan with a monthly fee has no starting value at zero texts.",
+      "example_wrong_reply": "Both lines start at zero and Plan A just goes up slower.",
+      "behavior_tag": "PARTIAL",
+      "prompt_cue": "You picture every graph starting at the corner at zero, so a starting fee has nowhere to go on your line.",
+      "detection_patterns": [
+        "through the origin",
+        "start(?:s|ing)? at (zero|0)\\b"
+      ]
+    }
+  ]
+}

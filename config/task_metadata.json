@@ -1,0 +1,678 @@
+{
+  "tasks": [
+    {
+      "task_id": "frac_word_maria_pizza_01",
+      "problem_type": "part_whole_word",
+      "description": "Maria ate 3/8 of a pizza then gave away 1/4. How much is left?",
+      "match_keywords": [
+        "maria",
+        "pizza",
+        "ate",
+        "gave away",
+        "how much is left"
+      ],
+      "required_constructs": [
+        "part_whole",
+        "fraction_equivalence",
+        "fraction_operations"
+      ],
+      "target_stack_level": 3,
+      "pisa_attributes": [
+        "mathematical_operation",
+        "mathematical_modeling"
+      ],
+      "expected_answer": "3/8",
+      "typical_errors": [
+        {
+          "error": "subtracts the fractions directly (3/8 - 1/4 = 1/8)",
+          "construct": "fraction_equivalence",
+          "stack_level": 1,
+          "detection_patterns": [
+            "1\\s*/\\s*8",
+            "3\\s*/\\s*8\\s*\\-\\s*1\\s*/\\s*4",
+            "3\\s*/\\s*8\\s*minus\\s*1\\s*/\\s*4",
+            "subtract.*3\\s*/\\s*8.*1\\s*/\\s*4",
+            "4\\s*/\\s*3",
+            "subtract(?:s|ing)? (the )?(tops? and bottoms?|numerators? and denominators?)",
+            "\\d+\\s*minus\\s*\\d+.*\\d+\\s*minus\\s*\\d+"
+          ]
+        },
+        {
+          "error": "gives away 1/4 of the remainder instead of 1/4 of the whole",
+          "construct": "part_whole",
+          "stack_level": 2
+        },
+        {
+          "error": "correct setup but arithmetic slip converting 1/4 to eighths",
+          "construct": "fraction_operations",
+          "stack_level": 2
+        }
+      ],
+      "task_family": "frac_word_part_whole",
+      "answer_strategy": "part_whole_word"
+    },
+    {
+      "task_id": "frac_add_common_01",
+      "description": "Add fractions with common denominators: 2/5 + 1/5",
+      "required_constructs": [
+        "part_whole",
+        "fraction_operations"
+      ],
+      "target_stack_level": 2,
+      "pisa_attributes": [
+        "mathematical_operation"
+      ],
+      "expected_answer": "3/5",
+      "typical_errors": [
+        {
+          "error": "adds numerators AND denominators (2/5+1/5=3/10)",
+          "construct": "part_whole",
+          "stack_level": 1,
+          "detection_patterns": [
+            "3\\s*/\\s*10",
+            "2\\s*/\\s*5\\+1\\s*/\\s*5",
+            "adds? (both )?(the )?(tops? and bottoms?|numerators? and denominators?)",
+            "\\d+\\s*plus\\s*\\d+.*\\d+\\s*plus\\s*\\d+"
+          ]
+        },
+        {
+          "error": "correct numerator, forgets to simplify when possible",
+          "construct": "fraction_operations",
+          "stack_level": 2
+        }
+      ],
+      "task_family": "frac_add_common",
+      "answer_strategy": "fraction_expression",
+      "problem_type": "fraction_expression"
+    },
+    {
+      "task_id": "frac_sub_unlike_01",
+      "description": "Subtract fractions with unlike denominators: 5/6 - 1/3",
+      "required_constructs": [
+        "part_whole",
+        "fraction_equivalence",
+        "fraction_operations"
+      ],
+      "target_stack_level": 3,
+      "pisa_attributes": [
+        "mathematical_operation",
+        "mathematical_abstraction"
+      ],
+      "expected_answer": "1/2",
+      "typical_errors": [
+        {
+          "error": "subtracts numerators and denominators directly (5-1)/(6-3) = 4/3",
+          "construct": "fraction_equivalence",
+          "stack_level": 1,
+          "detection_patterns": [
+            "4\\s*/\\s*3",
+            "subtract(?:s|ing)? (the )?(tops? and bottoms?|numerators? and denominators?)",
+            "\\d+\\s*minus\\s*\\d+.*\\d+\\s*minus\\s*\\d+"
+          ]
+        },
+        {
+          "error": "finds LCD=6 but converts 1/3 to 2/6 incorrectly as 1/6",
+          "construct": "fraction_equivalence",
+          "stack_level": 2
+        },
+        {
+          "error": "correct LCD=6, computes 5/6 - 2/6 = 3/6, does not simplify to 1/2",
+          "construct": "fraction_operations",
+          "stack_level": 2
+        }
+      ],
+      "task_family": "frac_sub_unlike",
+      "answer_strategy": "fraction_expression",
+      "problem_type": "fraction_expression"
+    },
+    {
+      "task_id": "frac_compare_01",
+      "description": "Which is larger: 1/4 or 1/3? Explain your reasoning.",
+      "required_constructs": [
+        "part_whole"
+      ],
+      "target_stack_level": 2,
+      "pisa_attributes": [
+        "mathematical_abstraction",
+        "logical_reasoning"
+      ],
+      "expected_answer": "1/3 is larger because the whole is split into fewer parts so each part is bigger",
+      "typical_errors": [
+        {
+          "error": "says 1/4 is bigger because 4 > 3",
+          "construct": "part_whole",
+          "stack_level": 1,
+          "detection_patterns": [
+            "1\\s*/\\s*4 is (bigger|larger)",
+            "4 is (bigger|larger) than 3",
+            "bigger (denominator|bottom).{0,40}(bigger|larger)\\s+(fraction|piece|share)",
+            "(denominator|bottom) is (bigger|larger).{0,40}(so|means).{0,20}(bigger|larger)"
+          ]
+        },
+        {
+          "error": "correct answer but no reasoning",
+          "construct": "part_whole",
+          "stack_level": 2
+        }
+      ],
+      "task_family": "frac_compare",
+      "answer_strategy": "frac_compare",
+      "problem_type": "frac_compare"
+    },
+    {
+      "task_id": "ratio_identify_01",
+      "description": "There are 2 red marbles and 5 blue marbles. Write the ratio of red to blue.",
+      "required_constructs": [
+        "ratio_concept"
+      ],
+      "target_stack_level": 3,
+      "pisa_attributes": [
+        "mathematical_operation"
+      ],
+      "expected_answer": "2:5 or 2/5",
+      "typical_errors": [
+        {
+          "error": "writes 5:2 (reverses order)",
+          "construct": "ratio_concept",
+          "stack_level": 1,
+          "detection_patterns": [
+            "5\\s*:\\s*2",
+            "\\bblue\\s*(:|to)\\s*red\\b",
+            "(other way around|reversed|wrong order|flip(?:ped)? (?:the )?order)"
+          ]
+        },
+        {
+          "error": "writes 2:7 (red to total instead of red to blue)",
+          "construct": "ratio_concept",
+          "stack_level": 2
+        },
+        {
+          "error": "writes 2/5 but calls it a fraction, not a ratio (no conceptual distinction)",
+          "construct": "ratio_concept",
+          "stack_level": 2
+        }
+      ],
+      "task_family": "ratio_identify",
+      "answer_strategy": "ratio_identify",
+      "problem_type": "ratio_identify"
+    },
+    {
+      "task_id": "ratio_equivalence_01",
+      "description": "Complete the ratio table: 2:3, 4:?, 6:9. What is the missing value?",
+      "required_constructs": [
+        "ratio_concept",
+        "ratio_equivalence"
+      ],
+      "target_stack_level": 3,
+      "pisa_attributes": [
+        "mathematical_operation",
+        "mathematical_modeling"
+      ],
+      "expected_answer": "6",
+      "typical_errors": [
+        {
+          "error": "adds 2 to each part: 4:5 (additive instead of multiplicative)",
+          "construct": "ratio_equivalence",
+          "stack_level": 1,
+          "detection_patterns": [
+            "4\\s*:\\s*5",
+            "add(?:ed|ing)?\\s+\\d+\\s+to each",
+            "add(?:ed|ing)?\\s+\\d+\\s+to both",
+            "I added \\d+"
+          ]
+        },
+        {
+          "error": "multiplies numerator correctly but forgets denominator: 4:3",
+          "construct": "ratio_equivalence",
+          "stack_level": 2
+        },
+        {
+          "error": "correct answer 6 but cannot explain why",
+          "construct": "ratio_equivalence",
+          "stack_level": 2
+        }
+      ],
+      "task_family": "ratio_equivalence",
+      "answer_strategy": "ratio_equivalence",
+      "problem_type": "ratio_equivalence"
+    },
+    {
+      "task_id": "unit_rate_01",
+      "description": "A car travels 150 miles in 3 hours. What is the unit rate (miles per hour)?",
+      "required_constructs": [
+        "ratio_concept",
+        "ratio_equivalence",
+        "unit_rate"
+      ],
+      "target_stack_level": 3,
+      "pisa_attributes": [
+        "mathematical_operation",
+        "mathematical_modeling"
+      ],
+      "expected_answer": "50 miles per hour",
+      "typical_errors": [
+        {
+          "error": "divides hours by miles: 3/150 (inverts the ratio)",
+          "construct": "unit_rate",
+          "stack_level": 1,
+          "detection_patterns": [
+            "3\\s*/\\s*150",
+            "3\\s*divided by\\s*150",
+            "0\\.02\\b",
+            "hours?\\s*(divided by|/)\\s*miles"
+          ]
+        },
+        {
+          "error": "computes 150/3=50 but writes answer as '50' without unit label",
+          "construct": "unit_rate",
+          "stack_level": 2
+        },
+        {
+          "error": "says 'the rate is 150:3' without simplifying to unit rate",
+          "construct": "ratio_equivalence",
+          "stack_level": 2
+        }
+      ],
+      "task_family": "unit_rate",
+      "answer_strategy": "unit_rate",
+      "problem_type": "unit_rate"
+    },
+    {
+      "task_id": "unit_rate_02",
+      "description": "Juice costs $3.60 for 12 oz. What is the unit price per ounce?",
+      "required_constructs": [
+        "ratio_equivalence",
+        "unit_rate"
+      ],
+      "target_stack_level": 3,
+      "pisa_attributes": [
+        "mathematical_operation",
+        "mathematical_modeling"
+      ],
+      "expected_answer": "$0.30 per oz",
+      "typical_errors": [
+        {
+          "error": "divides 12 by 3.60 = 3.33 (inverts)",
+          "construct": "unit_rate",
+          "stack_level": 1,
+          "detection_patterns": [
+            "3\\s*/\\s*150",
+            "3\\s*divided by\\s*150",
+            "0\\.02\\b",
+            "hours?\\s*(divided by|/)\\s*miles"
+          ]
+        },
+        {
+          "error": "computes 0.30 but says 'thirty cents total'",
+          "construct": "unit_rate",
+          "stack_level": 2
+        },
+        {
+          "error": "correct computation but uses cents without converting to dollars",
+          "construct": "fraction_operations",
+          "stack_level": 2
+        }
+      ],
+      "task_family": "unit_price",
+      "answer_strategy": "unit_price",
+      "problem_type": "unit_price"
+    },
+    {
+      "task_id": "phone_plans_linear_01",
+      "problem_type": "linear_compare_word",
+      "description": "A phone company (Plan A) charges a $20 monthly fee plus $0.10 per text message. Another company (Plan B) charges no monthly fee but $0.30 per text message. When is each plan better? Can you represent each plan and compare them?",
+      "match_keywords": [
+        "phone",
+        "plan a",
+        "plan b",
+        "text message",
+        "monthly fee",
+        "0.10",
+        "0.30"
+      ],
+      "required_constructs": [
+        "unit_rate",
+        "additive_vs_multiplicative",
+        "rate_comparison",
+        "linear_relationship",
+        "symbolic_modeling"
+      ],
+      "lpf_progress_indicators": [
+        "M.PRF.1c comparing two rates and evaluating them for a given situation (e.g., best value)",
+        "M.NO.2d contrasting situations as additive or multiplicative",
+        "M.PRF.1b distinguishing linear from nonlinear relationships in graphical and tabular representations",
+        "M.PRF.1d/1f/1g symbolic equations that summarise how a quantity changes"
+      ],
+      "target_stack_level": 3,
+      "pisa_attributes": [
+        "mathematical_modeling",
+        "logical_reasoning",
+        "mathematical_operation"
+      ],
+      "expected_answer": "100 texts",
+      "facilitator_solution": "Plan A: 20+0.1x; Plan B: 0.3x. Equal at x=100 (both $30). Plan B cheaper for fewer than 100 texts; Plan A cheaper for more than 100.",
+      "typical_errors": [
+        {
+          "error": "treats $0.10 per text as adding 10 cents once (flat amount) instead of a constant rate 0.1 × number of texts",
+          "construct": "additive_vs_multiplicative",
+          "stack_level": 1,
+          "detection_patterns": [
+            "\\b20\\s*\\+\\s*10\\s*x\\b",
+            "(?<![.\\d])10\\s*x\\b",
+            "20\\.10",
+            "plus 10 cents",
+            "add(?:s|ing)?\\s+10\\b",
+            "just 20 dollars plus 10"
+          ]
+        },
+        {
+          "error": "writes 10x instead of 0.1x (confuses cents with dollars)",
+          "construct": "unit_rate",
+          "stack_level": 1,
+          "detection_patterns": [
+            "\\b20\\s*\\+\\s*10\\s*x\\b",
+            "(?<![.\\d])10\\s*x\\b",
+            "20\\s*\\+\\s*10"
+          ]
+        },
+        {
+          "error": "treats 0.10/0.30 as monthly amounts rather than per-text rates",
+          "construct": "unit_rate",
+          "stack_level": 1,
+          "detection_patterns": [
+            "for the month",
+            "(0\\.10|0\\.30|ten cents|thirty cents).{0,30}(month|monthly)",
+            "(month|monthly).{0,30}(0\\.10|0\\.30|ten cents)",
+            "another 0\\.10 for the month"
+          ]
+        },
+        {
+          "error": "drops the $20 monthly fee and models Plan A as only 0.1x",
+          "construct": "additive_vs_multiplicative",
+          "stack_level": 1
+        },
+        {
+          "error": "claims Plan A is always better because the per-text rate is lower",
+          "construct": "rate_comparison",
+          "stack_level": 1,
+          "detection_patterns": [
+            "always better",
+            "ten cents is less",
+            "cheaper (rate|per text).{0,40}always",
+            "always.{0,40}(cheaper|better).{0,40}(per text|rate)"
+          ]
+        },
+        {
+          "error": "assumes doubling the number of texts doubles the Plan A bill",
+          "construct": "linear_relationship",
+          "stack_level": 2
+        },
+        {
+          "error": "draws or describes both plans as lines through the origin, losing Plan A's monthly fee",
+          "construct": "linear_relationship",
+          "stack_level": 1,
+          "detection_patterns": [
+            "through the origin",
+            "start(?:s|ing)? at (zero|0)\\b"
+          ]
+        },
+        {
+          "error": "swaps which plan has the monthly fee vs the higher per-text rate",
+          "construct": "symbolic_modeling",
+          "stack_level": 1,
+          "detection_patterns": [
+            "plan a is 0\\.3",
+            "plan b is 20\\s*\\+\\s*0\\.1",
+            "mixed them up",
+            "swapped (the )?(plans|rates)"
+          ]
+        },
+        {
+          "error": "compares the plans at one or two text counts only and never finds the crossover",
+          "construct": "rate_comparison",
+          "stack_level": 2
+        },
+        {
+          "error": "sets up equations but cannot interpret what 0.1 or 0.3 means in context (calls them coefficients only)",
+          "construct": "symbolic_modeling",
+          "stack_level": 2
+        },
+        {
+          "error": "sets plans equal but solves incorrectly (e.g. crossover at 20 or 50 instead of 100)",
+          "construct": "symbolic_modeling",
+          "stack_level": 2
+        },
+        {
+          "error": "adds a $20 fee to both plans even though only Plan A has a monthly fee",
+          "construct": "additive_vs_multiplicative",
+          "stack_level": 2
+        }
+      ],
+      "task_family": "linear_compare",
+      "answer_strategy": "linear_compare_word"
+    }
+  ],
+  "families": {
+    "linear_compare": {
+      "bank_task_id": "phone_plans_linear_01",
+      "signals": [
+        {
+          "all_pairs": [
+            [
+              "plan a",
+              "plan b"
+            ],
+            [
+              "plan 1",
+              "plan 2"
+            ],
+            [
+              "option a",
+              "option b"
+            ],
+            [
+              "company a",
+              "company b"
+            ]
+          ],
+          "weight": 2.0
+        },
+        {
+          "any": [
+            "per ",
+            "each"
+          ],
+          "weight": 1.5
+        },
+        {
+          "any": [
+            "fee",
+            "flat",
+            "monthly",
+            "membership",
+            "up front",
+            "upfront"
+          ],
+          "weight": 1.5
+        },
+        {
+          "any": [
+            "which plan",
+            "better deal",
+            "best value",
+            "cheaper",
+            "when is",
+            "when are",
+            "compare"
+          ],
+          "weight": 1.0
+        }
+      ]
+    },
+    "unit_price": {
+      "bank_task_id": "unit_rate_02",
+      "signals": [
+        {
+          "any": [
+            "unit price",
+            "per oz",
+            "per ounce",
+            "$"
+          ],
+          "weight": 1.5
+        },
+        {
+          "any": [
+            "oz",
+            "ounce",
+            "cost",
+            "price"
+          ],
+          "weight": 1.5
+        }
+      ]
+    },
+    "unit_rate": {
+      "bank_task_id": "unit_rate_01",
+      "signals": [
+        {
+          "any": [
+            "unit rate",
+            "miles per hour",
+            "per hour",
+            " mph",
+            "speed"
+          ],
+          "weight": 3.0,
+          "require_number": true
+        }
+      ]
+    },
+    "ratio_equivalence": {
+      "bank_task_id": "ratio_equivalence_01",
+      "signals": [
+        {
+          "any": [
+            "ratio table"
+          ],
+          "weight": 3.0
+        },
+        {
+          "regex": "\\d\\s*:\\s*\\d",
+          "any": [
+            "?"
+          ],
+          "weight": 3.0
+        }
+      ]
+    },
+    "ratio_identify": {
+      "bank_task_id": "ratio_identify_01",
+      "signals": [
+        {
+          "any": [
+            "ratio"
+          ],
+          "weight": 2.5
+        },
+        {
+          "all": [
+            "red",
+            "blue"
+          ],
+          "weight": 2.5
+        },
+        {
+          "any": [
+            "marbles"
+          ],
+          "weight": 1.5
+        }
+      ]
+    },
+    "frac_compare": {
+      "bank_task_id": "frac_compare_01",
+      "signals": [
+        {
+          "min_fractions": 2,
+          "any": [
+            "larger",
+            "compare",
+            "bigger",
+            "which is greater"
+          ],
+          "weight": 3.5
+        }
+      ]
+    },
+    "frac_sub_unlike": {
+      "bank_task_id": "frac_sub_unlike_01",
+      "signals": [
+        {
+          "min_fractions": 2,
+          "any": [
+            "subtract",
+            "minus",
+            "difference"
+          ],
+          "weight": 2.5
+        },
+        {
+          "min_fractions": 2,
+          "unlike_denominators": true,
+          "any": [
+            "subtract",
+            "minus",
+            "difference",
+            "unlike"
+          ],
+          "weight": 1.5
+        }
+      ]
+    },
+    "frac_add_common": {
+      "bank_task_id": "frac_add_common_01",
+      "signals": [
+        {
+          "min_fractions": 2,
+          "any": [
+            "add",
+            "plus",
+            "sum",
+            "total"
+          ],
+          "same_denominator": true,
+          "weight": 3.0
+        },
+        {
+          "min_fractions": 2,
+          "same_denominator": true,
+          "weight": 1.5
+        }
+      ]
+    },
+    "frac_word_part_whole": {
+      "bank_task_id": "frac_word_maria_pizza_01",
+      "signals": [
+        {
+          "min_fractions": 2,
+          "all_groups": [
+            [
+              " ate ",
+              "gave away",
+              "gave ",
+              "used ",
+              "shared "
+            ],
+            [
+              "left",
+              "remaining",
+              "how much"
+            ]
+          ],
+          "weight": 5.0
+        }
+      ]
+    }
+  }
+}
