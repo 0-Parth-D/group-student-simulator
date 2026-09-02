@@ -1,0 +1,98 @@
+# Teacher facilitation script extracted from a live Maya/Jordan phone-plans PST session.
+# Replay with: python eval/run_pst_script_replay.py
+#
+# Student opener claims are seeded automatically via FE_SEED_LINES when the session
+# starts with profile_ids [maya, jordan] on phone_plans_linear_01.
+
+id: pst_phone_plans_maya_jordan_v1
+source: conversation_log
+task_id: phone_plans_linear_01
+profile_ids: [maya, jordan]
+
+teacher_script:
+  - id: explain_reasoning
+    turn: 1
+    message: "canyon guys explain your reasoning for the claims"
+    label: peer_reasoning
+    note: "open floor; both students defend their conflicting claims"
+
+  - id: jordan_critique_maya
+    turn: 2
+    message: "Jordan what do you think maya is getting wrong"
+    label: direct_critique
+    note: "Jordan must speak; critique Maya's table-based claim"
+
+  - id: jordan_reason_maya_check
+    turn: 3
+    message: "Jordan what's your reasoning? maya can you check him?"
+    label: peer_check
+    note: "Jordan explains rate argument; Maya should react to Jordan"
+
+  - id: just_say_it
+    turn: 4
+    message: "Just say it"
+    label: procedure_clarify
+    note: "clarifies oral vs written response after Jordan stalls"
+
+  - id: maya_find_wrong
+    turn: 5
+    message: "yes but maya find what are the wrong things in Jordan's claim"
+    label: peer_critique
+    note: "Maya should critique rate-only reasoning, not just repeat table"
+
+  - id: jordan_comprehension_1
+    turn: 6
+    message: "Jordan did you getit"
+    label: comprehension_check
+    note: "checks whether Jordan absorbed Maya's fee critique"
+
+  - id: jordan_comprehension_2
+    turn: 7
+    message: "Didi you understant what Maya pointed out?"
+    label: comprehension_check
+    note: "follow-up comprehension probe on the $20 fee"
+
+  - id: jordan_fee_probe
+    turn: 8
+    message: "Jordan, okaybutwhydo you think 20 won't matter"
+    label: fee_probe
+    note: "press Jordan on ignoring the starting fee"
+
+  - id: maya_teach_table
+    turn: 9
+    message: "maya help Jordan understand why heis wrong using the table"
+    label: peer_teaching
+    note: "Maya should use table evidence to explain fee impact"
+
+  - id: crossover_question
+    turn: 10
+    message: "socan you answer the question then? when is each plan better. maya?"
+    label: crossover_question
+    note: "unlocks crossover discourse; Maya should state when each plan wins"
+
+  - id: explain_crossover
+    turn: 11
+    message: "okay can you explain maya why that would be thecase"
+    label: explain_reasoning
+    note: "Maya should explain the flip point, not only restate the table row"
+
+  - id: closing_synthesis
+    turn: 12
+    message: "what's the answer both of you say"
+    label: closing_synthesis
+    note: "both students should state when each plan is better"
+
+# Flat list kept for simple replay loaders.
+teacher_turns:
+  - "canyon guys explain your reasoning for the claims"
+  - "Jordan what do you think maya is getting wrong"
+  - "Jordan what's your reasoning? maya can you check him?"
+  - "Just say it"
+  - "yes but maya find what are the wrong things in Jordan's claim"
+  - "Jordan did you getit"
+  - "Didi you understant what Maya pointed out?"
+  - "Jordan, okaybutwhydo you think 20 won't matter"
+  - "maya help Jordan understand why heis wrong using the table"
+  - "socan you answer the question then? when is each plan better. maya?"
+  - "okay can you explain maya why that would be thecase"
+  - "what's the answer both of you say"

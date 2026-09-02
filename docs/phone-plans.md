@@ -38,9 +38,9 @@ Keep the crossover out of student prompts so struggling students stay genuinely 
 | `pr_algebra_crossover_slip` | Sets equal but solves to wrong \(x\) |
 | `pr_fee_added_to_both` | Puts $20 on both plans |
 
-Retrieval utterances for these ids live in `MISCONCEPTION_INSTANCES` (`src/app/knowledge/misconception_store.py`).
+Retrieval utterances for these ids live in `MISCONCEPTION_INSTANCES` (`backend/app/misconception_store.py`).
 
-## Offline battery scaffolds (`eval/fixtures/teacher_scripts.yaml`)
+## Offline battery scaffolds (`backend/eval/fixtures/teacher_scripts.yaml`)
 
 - Primary: `what does 0.1 mean in Plan A, and when are the two plans equal?`
 - Alt: `when are they equal`

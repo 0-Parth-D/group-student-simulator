@@ -1,8 +1,8 @@
-# Middle-School Student Simulator
+# Group Student Simulator
 
-Simulated middle-school math students for **small-group facilitation practice**. Teachers talk with three students at once. Each student has a personality, a learning-progression mastery state, and catalogued misconceptions.
+Backend-only FastAPI service for **small-group LP student simulation**. This is the sole learning-progression backend for the ArguMath PST training game (`pst-training-game` with `VITE_AI_SOURCE=backend`).
 
-This is the shareable codebase. A stand-in web UI is included so you can run locally; the backend API is the contract for later frontends.
+Teachers talk with 2–3 simulated students. Each student has a Big Five personality, a learning-progression mastery state, and catalogued misconceptions. Gate, coach, hint, and reflection agents stay on the **frontend**.
 
 ## Requirements
 
@@ -32,85 +32,116 @@ pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-Edit `.env` and set:
+Edit `.env` and set at least:
 
 ```env
 TAMU_CHAT_API_KEY=sk-your-tamu-key-here
 OPENAI_MODEL=protected.gpt-5.4
 ```
 
-Optional: set `STUDENT_OPENAI_MODEL` (for example `protected.Claude Sonnet 4.6`) so student replies use a different model than judges/classifiers.
+Optional: `STUDENT_OPENAI_MODEL` (for example `protected.Claude Sonnet 4.6`) so student replies use a different model than judges/classifiers. See `.env.example` for group, CORS, and Qdrant knobs.
 
-## Run the UI
+## Run
 
 ```bash
+cd backend
 python run.py
 ```
 
-Open http://localhost:8000
+API: http://localhost:8000  
+Health: http://localhost:8000/api/health
 
-1. Pick a group (phone-plans demo is the recommended first run).
-2. Prepare session → Start practice.
-3. Facilitate: call a student by name, open the floor (“Discuss together”), or ask someone to watch.
+From the repo root, `python run.py` also works (same app, port 8000).
 
-Facilitator answer key for the default task: [`docs/phone-plans.md`](docs/phone-plans.md).
+## pst-training-game
+
+In the game repo `.env` / `.env.local`:
+
+```env
+VITE_AI_SOURCE=backend
+VITE_STUDENT_SIM_URL=http://localhost:8000
+```
+
+Then start this backend **before** the game. The game calls:
+
+| Method | Path | Role |
+|--------|------|------|
+| `POST` | `/api/pst/sessions` | Briefing Start — Maya + Jordan, phone plans, auto-start |
+| `POST` | `/api/pst/sessions/{id}/turn` | Teacher turn (NDJSON stream by default) |
+| `DELETE` | `/api/pst/sessions/{id}` | End Discussion |
+
+Audio/board stubs return `501` (mic/Whisper and board vision stay on the FE). Full contract: [`backend/docs/PST-CONNECTOR-API.md`](backend/docs/PST-CONNECTOR-API.md). Live HUD: [`backend/docs/LIVE-HUD-API.md`](backend/docs/LIVE-HUD-API.md).
 
 ## Tests
 
 Deterministic unit tests do not need an API key:
 
 ```bash
-pytest
+pytest backend/tests
 ```
+
+or `cd backend && pytest`.
 
 ## Evaluation
 
-Live group demo (needs a TAMU key — generates a full conversation):
+From `backend/` (TAMU key required for live generation):
 
 ```bash
 python eval/run_group_demo.py
-```
-
-Batteries also generate sessions (key required). `--skip-llm` skips LLM *judges* after the run:
-
-```bash
 python eval/run_group_battery.py --skip-llm
-python eval/run_battery.py --skip-llm
 ```
 
-See [`docs/evaluation.md`](docs/evaluation.md).
+See [`docs/evaluation.md`](docs/evaluation.md). Facilitator answer key: [`docs/phone-plans.md`](docs/phone-plans.md).
 
 ## Project layout
 
 ```
-config/          Declarative research content (KG, tasks, misconception catalog)
-src/app/
-  group/         Small-group sessions, speak policy, peer continuation
-  student/       Profiles, personality, learning, 1:1 session core (API + eval)
-  knowledge/     Learning progression, tasks, misconceptions, turn analysis
-  llm/           TAMU Chat client and role profiles
-  main.py        FastAPI app
-eval/            Batteries, judges, fixtures
-tests/
-frontend/        Temporary static UI (group practice only)
-docs/
+group-student-simulator/
+  backend/
+    app/           Group sessions, PST facade, LP stack
+    config/        KG, tasks, misconception catalog
+    docs/          PST connector + Live HUD API
+    eval/          Group batteries and judges
+    tests/
+    run.py
+  data/            Local Qdrant index (gitignored)
+  docs/            Architecture, evaluation, migration notes
+  scripts/         sync_from_student_simulation.py
+  run.py           Dev entry (same as backend/run.py)
 ```
 
-## API (group-first)
+## API
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/health` | Health + LP stack status |
-| GET | `/api/profiles` | Student profiles |
-| POST | `/api/group-sessions` | Create a 3-student group session |
-| POST | `/api/group-sessions/{id}/start` | Start discussion |
-| POST | `/api/group-sessions/{id}/message` | Teacher move |
-| POST | `/api/group-sessions/{id}/advance` | Nudge peer continuation |
-| GET | `/api/group-sessions/{id}/export` | Export transcript + eval fields |
-| DELETE | `/api/group-sessions/{id}` | End session |
+| `GET` | `/api/health` | Health + LP stack status |
+| `GET` | `/api/profiles` | Student profiles |
+| `POST` | `/api/pst/sessions` | Create + auto-start FE starter (Maya/Jordan) |
+| `POST` | `/api/pst/sessions/{id}/turn` | Teacher turn (stream default) |
+| `DELETE` | `/api/pst/sessions/{id}` | End PST session |
+| `POST` | `/api/group-sessions` | Research group session (default 3 students) |
+| `POST` | `/api/group-sessions/{id}/start` | Start discussion |
+| `POST` | `/api/group-sessions/{id}/message` | Teacher move (`?stream=true` for NDJSON) |
+| `POST` | `/api/group-sessions/{id}/advance` | Nudge peer continuation |
+| `GET` | `/api/group-sessions/{id}/live` | Live HUD snapshot |
+| `GET` | `/api/group-sessions/{id}/roster` | Roster + knowledge |
+| `GET` | `/api/group-sessions/{id}/export` | Transcript + eval fields |
+| `DELETE` | `/api/group-sessions/{id}` | End session |
 
-One-to-one tutoring endpoints (`/api/sessions/...`) remain for the eval battery and later tooling. They are not exposed in the stand-in UI.
+There is **no** 1:1 tutoring API (`/api/sessions/*`) and **no** demo frontend in this repo.
 
 ## Design notes
 
-Why mastery is 4-level, why the KG is declarative, and how group speak constraints work: [`docs/architecture.md`](docs/architecture.md).
+Why mastery is 4-level and how group speak constraints work: [`docs/architecture.md`](docs/architecture.md).  
+What was copied from `student-simulation`: [`MIGRATION.md`](MIGRATION.md).
+
+## Sync from student-simulation
+
+When the monolith repo changes, refresh this backend:
+
+```bash
+python scripts/sync_from_student_simulation.py
+cd backend && pytest
+```
+
+See [`docs/MIGRATION_PROMPT.md`](docs/MIGRATION_PROMPT.md) for the full agent checklist.

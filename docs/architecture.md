@@ -15,7 +15,7 @@ The LLM never invents new math constructs. It only enacts the state the router a
 
 ## Why a declarative knowledge graph
 
-Constructs and prerequisite edges live in `config/knowledge_graph.yaml`. They come from the NCIEA **Learning Progressions Framework** (Hess et al., 2010/2011) — strands NO, PRF, and SE for middle school. Every node cites an LPF learning target / progress indicator.
+Constructs and prerequisite edges live in `backend/config/knowledge_graph.yaml`. They come from the NCIEA **Learning Progressions Framework** (Hess et al., 2010/2011) — strands NO, PRF, and SE for middle school. Every node cites an LPF learning target / progress indicator.
 
 We do **not** let the LLM build the graph at session start. Early prototypes did that and produced inconsistent, non-replicable student knowledge. The rule is:
 
@@ -33,7 +33,7 @@ PISA competency attributes and DLM linkage-level wording are overlays. They do n
 | 2 | partial | Some of the target idea; incomplete or fragile |
 | 3 | good | At or near the grade-level target |
 
-Level prose is resolved by `app.knowledge.construct_text.mastery_descriptor`. Fraction/ratio nodes use DLM linkage wording (IP/DP/PP/T); later linear-change nodes use `lpf_stack` text written from LPF indicators.
+Level prose is resolved by `app.construct_text.mastery_descriptor`. Fraction/ratio nodes use DLM linkage wording (IP/DP/PP/T); later linear-change nodes use `lpf_stack` text written from LPF indicators.
 
 ## Per-turn loop (math turns)
 
@@ -51,11 +51,11 @@ Math prompts put a non-negotiable **cognitive state** block above Big Five style
 
 ## Tasks and answers
 
-`config/task_metadata.json` is the task bank: constructs, target stack level, PISA Q-matrix, expected answer / strategy. Word problems are disambiguated before tagging. Expected answers are computed from metadata strategies, not hardcoded per demo scenario.
+`backend/config/task_metadata.json` is the task bank: constructs, target stack level, PISA Q-matrix, expected answer / strategy. Word problems are disambiguated before tagging. Expected answers are computed from metadata strategies, not hardcoded per demo scenario.
 
 ## Misconceptions
 
-`config/misconception_catalog.json` stores error types with detection patterns (regex) used by deterministic eval. At runtime, optional local **Qdrant** retrieves concrete error utterances; if Qdrant is off or locked, metadata fallback still works.
+`backend/config/misconception_catalog.json` stores error types with detection patterns (regex) used by deterministic eval. At runtime, optional local **Qdrant** retrieves concrete error utterances; if Qdrant is off or locked, metadata fallback still works.
 
 ## Group facilitation
 
@@ -66,15 +66,19 @@ Group sessions reuse the same student reply pipeline, with extra policy:
 - **Multi-round peer continuation** — after an open floor, peers may keep talking (LangGraph loop) until nobody volunteers or a safety cap is hit.
 - **Track B receptivity** — session-fixed scaffold sensitivity; dumping the full answer does not raise mastery and surfaces a teaching warning.
 
-Default demo group: Jordan, Sam, Alex on `phone_plans_linear_01`.
+PST starter group: Maya + Jordan on `phone_plans_linear_01` (`/api/pst/sessions`). Research default: Alex, Maya, Jordan (`/api/group-sessions`).
+
+Social teacher turns turn **claim lock off** and skip the game-flow peer chain so greetings do not restated Plan A/B. Math turns keep opposing claims (Maya table/Plan B vs Jordan rate/Plan A).
 
 ## 1:1 path
 
-One-to-one sessions still exist in `app.student.sessions` and `/api/sessions`. They share the student/LP stack and power the 1:1 eval battery. The stand-in UI is group-only.
+`backend/app/sessions.py` remains as a library (teacher opener + KG summary helpers). There is **no** `/api/sessions/*` HTTP API in this repo.
 
 ## What we deliberately left out
 
-- Local Llama / LoRA student backends (experimental; not needed to replicate the TAMU demo)
+- Demo frontend (pst-training-game owns UI)
+- Coach / gate / hint / reflection agents (frontend-only)
+- Local Llama / LoRA student backends
 - Required Neo4j (optional; YAML graph is the default)
 - Letting the model add KG nodes
 - Full CCSS grade 6–8 coverage (current graph is the LPF slice we teach with)

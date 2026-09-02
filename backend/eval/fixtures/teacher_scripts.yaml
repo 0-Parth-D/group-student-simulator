@@ -1,0 +1,53 @@
+# Teacher script for control-based eval battery (after session auto-opener, turn 1).
+# Turn indices: 1=opener response, 2-6=follow-ups below.
+#
+# `role` names what the turn asks of the student. app/expected_behavior.py turns it
+# into the expectation the judges score against, so roles must stay task-agnostic —
+# never encode which scenario is running here.
+
+opening_role: opening_attempt
+
+default_math:
+  follow_ups:
+    - turn: 2
+      message: "okay"
+      role: vague_ack
+      note: "vague_acknowledgment stall test"
+    - turn: 3
+      message: "go on"
+      role: vague_ack
+      note: "second vague ack, should trigger stall_active"
+    - turn: 4
+      message: null  # filled per task from scaffold_cues
+      role: post_scaffold
+      note: "task-specific scaffold"
+    - turn: 5
+      message: "correct"
+      role: closing_ack
+      note: "vague ack after scaffold"
+    - turn: 6
+      message: "what's 4/5 - 6/8"
+      role: drill
+      note: "procedural drill off main task"
+
+scaffold_cues:
+  frac_word_maria_pizza_01: "what's the whole"
+  phone_plans_linear_01: "what does 0.1 mean in Plan A, and when are the two plans equal?"
+  frac_add_common_01: "add the numerators, what happens to the denominator"
+  frac_sub_unlike_01: "find a common denominator first"
+  frac_compare_01: "think about splitting the whole into parts"
+  ratio_identify_01: "red to blue, not red to total"
+  ratio_equivalence_01: "how do you scale both parts of a ratio"
+  unit_rate_01: "miles divided by hours"
+  unit_rate_02: "total cost divided by ounces"
+
+# Optional second scaffold lines for richer offline scripts (not used by default battery).
+scaffold_cues_alt:
+  frac_word_maria_pizza_01: "how much of the whole pizza is gone"
+  phone_plans_linear_01: "when are they equal"
+
+profiles:
+  - alex
+  - maya
+  - jordan
+  - riley

@@ -203,10 +203,11 @@ cython_debug/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
 
-# Local vector store + eval outputs
+# Local vector store + eval outputs (canonical paths)
 data/qdrant_storage/
-eval/results/**
-!eval/results/.gitkeep
+backend/qdrant_storage/
+backend/eval/results/**
+!backend/eval/results/.gitkeep
 
 *.safetensors
 checkpoint-*/

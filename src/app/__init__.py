@@ -1,1 +1,0 @@
-"""Middle-school student simulator."""
