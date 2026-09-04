@@ -1,9 +1,16 @@
-"""LLM-critique response refinement (discourse/LP gates, then personality/register).
+"""Self-Refine student-reply loop with selective deterministic gates.
+
+Lineage:
+  - Self-Refine (Madaan et al., 2023): generate → actionable feedback → refine,
+    retaining prior draft/feedback history; stop when ok or revision budget exhausted.
+  - MAgICoRe (Chen et al., 2024): selective refinement — skip LLM critic/rewrite when
+    deterministic gates already pass (avoids excessive over-correction). Full multi-agent
+    Solver/Reviewer/Refiner + PRM scoring is out of scope here.
 
 Flow:
-  draft → semantic repetition → reasoning warrant → discourse progress
-       → maya critique rich → jordan passive → crossover gate
-       → maya overcomplete → claim lock → adult register → critic LLM → rewrite
+  draft → deterministic gates
+       → (gates pass + REFINE_SELECTIVE) selective_skip → voice
+       → (gates fail | soft critic) Self-Refine feedback → refine with history → …
        → voice pass (kid register; preserve peer references when discourse passed)
 """
 
@@ -19,6 +26,8 @@ from typing import Any, Iterator, List, Optional, Sequence, Union
 from app.config import (
     REFINE_MAX_REVISIONS,
     REFINE_MODE,
+    REFINE_SELECTIVE,
+    REGISTER_LLM,
     STUDENT_MAX_TOKENS_MATH,
     STUDENT_MAX_TOKENS_SOCIAL,
 )
@@ -41,6 +50,8 @@ class GenerationResult:
     draft: str
     revisions: int
     critic: Optional[dict] = None
+    refine_path: str = "off"  # selective_skip | self_refine | off
+    feedback_rounds: int = 0
 
     def __iter__(self) -> Iterator:
         """Unpack as ``(final_reply, revisions)`` for call-site compatibility."""
@@ -80,7 +91,31 @@ ADULT_REGISTER_MARKERS = (
     "compare the rates",
     "in conclusion",
     "to summarize",
+    "specific case",
+    "ends up being",
+    "you can't just",
+    "you cannot just",
+    "just one specific",
+    "based on one number",
 )
+
+REGISTER_LLM_SYSTEM = """You judge whether ONE draft sounds like a real 6th–8th grader
+speaking in a math class, or like a tutor/adult explaining.
+
+FAIL (pass=false) when the draft:
+- uses textbook/debate phrasing (specific case, ends up being, you can't just… decide,
+  therefore, essentially, the rate is lower as a polished warrant)
+- is a complete multi-clause essay or lectures a peer
+- could be said by a teacher summarizing the math
+
+PASS (pass=true) when the draft:
+- is short, spoken, imperfect, age-appropriate
+- may use fillers (um, wait, okay so, kinda) and incomplete thoughts
+
+JSON only:
+{"pass": boolean, "issues": ["tutor_tone"|"too_polished"|"adult_register"], "brief": string}
+brief: one sentence on how to sound more like a kid; empty if pass.
+"""
 
 HEDGE_FILLER_MARKERS = (
     "i think",
@@ -133,7 +168,9 @@ JSON schema:
 
 ok is true ONLY if claim, personality, learning, AND misconception all pass.
 Treat tutor_tone / too_polished as personality failures (set personality.pass=false).
-brief: one short sentence telling the rewriter what to fix (empty if ok).
+brief: one actionable sentence naming WHAT to change and HOW (quote a concrete phrase
+to fix when possible). Empty if ok. Example: "Cut the 'therefore…superior' lecture;
+one hedged sentence that keeps Plan A and the fee doubt."
 issues: short machine tags e.g. claim_flip, yeah_same, personality_overtalk, tutor_tone,
 too_polished, lp_overcomplete, misconception_missing, too_eager, too_quiet_when_high_E.
 """
@@ -185,8 +222,15 @@ def ocean_filler_guidance(student: Optional[Student]) -> str:
 def check_adult_register(
     draft: str,
     student: Optional[Student] = None,
+    *,
+    use_llm: Optional[bool] = None,
 ) -> Optional[dict]:
-    """Deterministic adult/tutor register gate. Returns failing critic dict or None."""
+    """Adult/tutor register gate: deterministic markers, then optional LLM judge.
+
+    LLM stage runs only when keywords pass, so selective refine still catches
+    polished adult drafts that slip the marker list. Set ``use_llm=False`` in
+    unit tests that mock no network.
+    """
     text = (draft or "").strip()
     if not text:
         return None
@@ -221,9 +265,13 @@ def check_adult_register(
         max_sent = 2
     sc = _sentence_count(text)
     hedged = _has_hedge_or_filler(text)
-    if sc > max_sent and not hedged:
+    # Single turn-start filler must not waive polish checks on long drafts.
+    opener_only = hedged and len(text) > 120
+    if sc > max_sent and (not hedged or opener_only):
         issues.append("too_polished")
     if len(text) > 220 and not hedged:
+        issues.append("too_polished")
+    if len(text) > 160 and opener_only:
         issues.append("too_polished")
 
     # de-dupe preserving order
@@ -233,23 +281,98 @@ def check_adult_register(
         if i not in seen:
             seen.add(i)
             uniq.append(i)
-    if not uniq:
+    if uniq:
+        return {
+            "ok": False,
+            "claim": {"pass": True, "detail": "deferred"},
+            "personality": {
+                "pass": False,
+                "detail": "adult/tutor register: " + ",".join(uniq),
+            },
+            "learning": {"pass": True, "detail": "deferred"},
+            "misconception": {"pass": True, "detail": "deferred"},
+            "issues": uniq,
+            "brief": (
+                "Shorter middle-school voice. More 'I think / wait / kinda' if unsure. "
+                "No teaching or textbook wording."
+            ),
+            "path": "register_deterministic",
+        }
+
+    do_llm = REGISTER_LLM if use_llm is None else bool(use_llm)
+    if not do_llm:
+        return None
+    return check_adult_register_llm(text, student=student)
+
+
+def _register_llm_worth_calling(text: str) -> bool:
+    """Skip LLM on ultra-short kid fragments; spend it on medium+ complete turns."""
+    t = (text or "").strip()
+    if len(t) < 48:
+        return False
+    # One short hedged fragment — leave alone
+    if len(t) < 70 and _has_hedge_or_filler(t) and _sentence_count(t) <= 1:
+        return False
+    return True
+
+
+def check_adult_register_llm(
+    draft: str,
+    student: Optional[Student] = None,
+) -> Optional[dict]:
+    """LLM register judge. Returns failing critic dict or None if OK / unavailable."""
+    text = (draft or "").strip()
+    if not text or not _register_llm_worth_calling(text):
         return None
 
+    persona = "middle-school student"
+    if student is not None:
+        bits = [
+            f"Extraversion={student.Extraversion}",
+            f"Neuroticism={student.Neuroticism}",
+            f"Agreeableness={student.Agreeableness}",
+        ]
+        persona = "OCEAN: " + ", ".join(bits)
+        if student.Extraversion == "Low" or student.Neuroticism == "High":
+            persona += " — prefer hesitant, brief, uncertain."
+        elif student.Extraversion == "High":
+            persona += " — confident/eager OK, still kid slang not debate-club."
+
+    user = (
+        f"Persona target: {persona}\n\n"
+        f"DRAFT:\n{text}\n"
+    )
+    try:
+        raw = complete(LLMRole.REPLY_CRITIC, REGISTER_LLM_SYSTEM, user)
+        data = json.loads(raw)
+        if not isinstance(data, dict):
+            raise ValueError("register LLM returned non-object")
+    except Exception as exc:
+        logger.warning("Register LLM failed — treating as pass: %s", exc)
+        return None
+
+    if data.get("pass", True):
+        return None
+
+    raw_issues = data.get("issues") or ["adult_register"]
+    if not isinstance(raw_issues, list):
+        raw_issues = ["adult_register"]
+    issues = [str(i) for i in raw_issues if i] or ["adult_register"]
+    brief = (data.get("brief") or "").strip() or (
+        "Sound like a middle-schooler talking — shorter, more spoken, less essay."
+    )
     return {
         "ok": False,
         "claim": {"pass": True, "detail": "deferred"},
         "personality": {
             "pass": False,
-            "detail": "adult/tutor register: " + ",".join(uniq),
+            "detail": "adult/tutor register (llm): " + ",".join(issues),
         },
         "learning": {"pass": True, "detail": "deferred"},
         "misconception": {"pass": True, "detail": "deferred"},
-        "issues": uniq,
-        "brief": (
-            "Shorter middle-school voice. More 'I think / wait / kinda' if unsure. "
-            "No teaching or textbook wording."
-        ),
+        "issues": issues,
+        "brief": brief,
+        "path": "register_llm",
     }
 
 
@@ -792,12 +915,12 @@ def build_expected_pack(
     }
 
 
-def critique_student_reply(
+def run_deterministic_gates(
     draft: str,
     behavior_profile: dict,
     *,
+    pack: dict[str, Any],
     student: Optional[Student] = None,
-    misconception: Union[dict, str, None] = None,
     turn_mode: TurnMode = "math_scaffold",
     is_peer_turn: bool = False,
     implied_plan: str = "",
@@ -807,22 +930,14 @@ def critique_student_reply(
     turn_role: str = "",
     prior_peer_name: str = "",
     prior_peer_text: str = "",
-) -> dict[str, Any]:
-    """LLM critic: discourse/LP gates → claim → register → personality."""
-    pack = build_expected_pack(
-        behavior_profile,
-        student=student,
-        misconception=misconception,
-        turn_mode=turn_mode,
-        is_peer_turn=is_peer_turn,
-        turn_role=turn_role,
-    )
+) -> Optional[dict[str, Any]]:
+    """Hard gates before LLM critic. Return fail dict (with pack) or None if all pass."""
     plan = (implied_plan or behavior_profile.get("implied_plan") or "").strip()
     profile_id = str(behavior_profile.get("profile_id") or "")
-    # Social/off-topic: never force Plan A/B or misconception onto a greeting reply.
     non_math = turn_mode in ("social", "off_topic")
     if non_math:
         plan = ""
+
     rep_fail = None if non_math else check_semantic_repetition(
         draft, prior_replies or (), expected_move=expected_move
     )
@@ -901,6 +1016,73 @@ def critique_student_reply(
     if register_fail is not None:
         register_fail["pack"] = pack
         return register_fail
+
+    return None
+
+
+def critique_student_reply(
+    draft: str,
+    behavior_profile: dict,
+    *,
+    student: Optional[Student] = None,
+    misconception: Union[dict, str, None] = None,
+    turn_mode: TurnMode = "math_scaffold",
+    is_peer_turn: bool = False,
+    implied_plan: str = "",
+    prior_replies: Optional[Sequence[str]] = None,
+    fight_phase: str = "fight",
+    expected_move: str = "",
+    turn_role: str = "",
+    prior_peer_name: str = "",
+    prior_peer_text: str = "",
+    selective: Optional[bool] = None,
+) -> dict[str, Any]:
+    """Gates → (selective skip | LLM critic). Set ``selective`` to override REFINE_SELECTIVE."""
+    pack = build_expected_pack(
+        behavior_profile,
+        student=student,
+        misconception=misconception,
+        turn_mode=turn_mode,
+        is_peer_turn=is_peer_turn,
+        turn_role=turn_role,
+    )
+    plan = (implied_plan or behavior_profile.get("implied_plan") or "").strip()
+    non_math = turn_mode in ("social", "off_topic")
+    if non_math:
+        plan = ""
+
+    gate_fail = run_deterministic_gates(
+        draft,
+        behavior_profile,
+        pack=pack,
+        student=student,
+        turn_mode=turn_mode,
+        is_peer_turn=is_peer_turn,
+        implied_plan=implied_plan,
+        prior_replies=prior_replies,
+        fight_phase=fight_phase,
+        expected_move=expected_move,
+        turn_role=turn_role,
+        prior_peer_name=prior_peer_name,
+        prior_peer_text=prior_peer_text,
+    )
+    if gate_fail is not None:
+        gate_fail.setdefault("path", "deterministic_gate")
+        return gate_fail
+
+    use_selective = REFINE_SELECTIVE if selective is None else bool(selective)
+    if use_selective:
+        return {
+            "ok": True,
+            "claim": {"pass": True, "detail": "selective_skip"},
+            "personality": {"pass": True, "detail": "selective_skip"},
+            "learning": {"pass": True, "detail": "selective_skip"},
+            "misconception": {"pass": True, "detail": "selective_skip"},
+            "issues": [],
+            "brief": "",
+            "pack": pack,
+            "path": "selective_skip",
+        }
 
     claim_lock_block = (
         "## Claim lock\nimplied_plan=none (social/off-topic — do NOT demand a plan claim)\n\n"
@@ -985,6 +1167,7 @@ def critique_student_reply(
             "issues": issue_strs,
             "brief": str(data.get("brief") or "").strip(),
             "pack": pack,
+            "path": "llm_critic",
         }
     except Exception as exc:
         logger.warning("LLM reply critique failed — accepting draft: %s", exc)
@@ -997,6 +1180,7 @@ def critique_student_reply(
             "issues": [],
             "brief": "",
             "pack": pack,
+            "path": "critic_unavailable",
         }
 
 
@@ -1094,7 +1278,9 @@ def rewrite_kid_voice(
         f"{claim_rule}"
         "- Sound like a real 6–8th grader talking out loud (not a tutor).\n"
         "- At most two fillers, only at start or when hedging/repairing.\n"
-        "- No textbook words (therefore, essentially, we can see, first/second…).\n"
+        "- No textbook/debate words (therefore, essentially, we can see, first/second,\n"
+        "  specific case, ends up being, you can't just… decide).\n"
+        "- Prefer short spoken fragments over complete essays.\n"
         "- Output ONLY the spoken reply.\n\n"
         f"DRAFT:\n{text}"
     )
@@ -1128,7 +1314,7 @@ def generate_with_refinement(
     prior_peer_text: str = "",
     **_kwargs,
 ) -> GenerationResult:
-    """Generate student reply; critique/rewrite; then kid-voice pass (#5/#6 + fillers).
+    """Self-Refine: generate → feedback → refine with history; selective skip on easy.
 
     ``scaffold_boost`` retained for call-site compatibility (unused by LLM critic).
     Unpacks as ``(final_reply, revisions)`` via ``GenerationResult.__iter__``.
@@ -1158,6 +1344,10 @@ def generate_with_refinement(
     draft = complete_chat(LLMRole.STUDENT_REPLY, system, history, **chat_kw)
     response = draft
     last_critique: Optional[dict] = None
+    refine_path = "off"
+    feedback_rounds = 0
+    # Self-Refine Eq. 4: accumulate (yt, fbt) pairs for subsequent refine prompts.
+    refine_trace: list[dict[str, str]] = []
 
     if revisions_cap <= 0:
         # Still run voice pass unless refine fully off (voice is the register floor).
@@ -1165,11 +1355,14 @@ def generate_with_refinement(
             response = rewrite_kid_voice(
                 response, student=student, turn_mode=turn_mode
             )
+            refine_path = "off"
         return GenerationResult(
             final_reply=response,
             draft=draft,
             revisions=0,
             critic=None,
+            refine_path=refine_path,
+            feedback_rounds=0,
         )
 
     revisions = 0
@@ -1192,7 +1385,14 @@ def generate_with_refinement(
             prior_peer_text=prior_peer_text,
         )
         last_critique = critique
+        feedback_rounds += 1
+        path = str(critique.get("path") or "")
+
         if critique.get("ok"):
+            if path == "selective_skip" and refine_path == "off":
+                refine_path = "selective_skip"
+            elif refine_path == "off":
+                refine_path = "self_refine" if revisions > 0 else "selective_skip"
             if not discourse_ref_token and (
                 is_peer_turn or turn_role == "peer_critique"
             ):
@@ -1201,22 +1401,29 @@ def generate_with_refinement(
                 )
             break
 
+        refine_path = "self_refine"
         logger.info(
-            "LLM critique failed — refining (pass %d): personality=%s learning=%s "
-            "misconception=%s issues=%s",
+            "Self-Refine feedback failed — refining (pass %d): personality=%s learning=%s "
+            "misconception=%s issues=%s path=%s",
             revisions + 1,
             (critique.get("personality") or {}).get("pass"),
             (critique.get("learning") or {}).get("pass"),
             (critique.get("misconception") or {}).get("pass"),
             critique.get("issues"),
+            path,
         )
         refine_msg = build_llm_refinement_message(critique)
-        refine_hist = history + [
-            {"role": "assistant", "content": response},
-            {"role": "user", "content": refine_msg},
-        ]
+        refine_trace.append({"draft": response, "feedback": refine_msg})
+        refine_hist = list(history)
+        for prior in refine_trace:
+            refine_hist.append({"role": "assistant", "content": prior["draft"]})
+            refine_hist.append({"role": "user", "content": prior["feedback"]})
         response = complete_chat(LLMRole.STUDENT_REPLY, system, refine_hist, **chat_kw)
         revisions += 1
+    else:
+        # Exhausted revision budget without ok — still self_refine path.
+        if last_critique is not None and not last_critique.get("ok"):
+            refine_path = "self_refine"
 
     # #6: math claim locked above; surface register + OCEAN fillers in a dedicated pass.
     pre_voice = response
@@ -1229,4 +1436,6 @@ def generate_with_refinement(
         draft=draft,
         revisions=revisions,
         critic=critic_for_log(last_critique),
+        refine_path=refine_path,
+        feedback_rounds=feedback_rounds,
     )

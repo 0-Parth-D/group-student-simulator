@@ -1,5 +1,6 @@
 """Tests for LLM-critique response refinement (mocked critic / student LLM)."""
 
+import json
 from unittest.mock import patch
 
 from app.models import Student
@@ -78,6 +79,7 @@ def test_check_adult_register_catches_tutor_tone():
     fail = check_adult_register(
         "Plan A scales more slowly; therefore for any large volume Plan A is superior.",
         student=_maya(),
+        use_llm=False,
     )
     assert fail is not None
     assert fail["ok"] is False
@@ -88,8 +90,105 @@ def test_check_adult_register_allows_hedged_kid_voice():
     ok = check_adult_register(
         "Wait… on my table at 50, Plan B was less though?",
         student=_maya(),
+        use_llm=False,
     )
     assert ok is None
+
+
+def test_check_adult_register_catches_specific_case_phrase():
+    fail = check_adult_register(
+        "Okay so fifty texts is just one specific case, and if you're sending "
+        "way more than that, Plan A actually ends up being cheaper because the "
+        "rate is lower — you can't just look at one number and decide.",
+        student=_jordan(),
+        use_llm=False,
+    )
+    assert fail is not None
+    assert "tutor_tone" in fail["issues"] or "too_polished" in fail["issues"]
+
+
+def test_check_adult_register_llm_fails_adult_draft():
+    from app.response_refinement import check_adult_register_llm
+
+    with patch(
+        "app.response_refinement.complete",
+        return_value=json.dumps(
+            {
+                "pass": False,
+                "issues": ["adult_register", "too_polished"],
+                "brief": "Shorter kid voice; drop debate phrasing.",
+            }
+        ),
+    ):
+        # Avoid keyword hit so LLM stage is what fails
+        fail = check_adult_register_llm(
+            "Looking at the numbers carefully, Plan A becomes preferable once "
+            "usage grows large enough due to the smaller incremental cost.",
+            student=_jordan(),
+        )
+    assert fail is not None
+    assert fail["ok"] is False
+    assert fail.get("path") == "register_llm"
+    assert "adult_register" in fail["issues"] or "too_polished" in fail["issues"]
+
+
+def test_check_adult_register_calls_llm_when_markers_pass():
+    with patch(
+        "app.response_refinement.complete",
+        return_value=json.dumps(
+            {"pass": False, "issues": ["adult_register"], "brief": "More kid-like."}
+        ),
+    ) as mocked:
+        fail = check_adult_register(
+            "Looking at the numbers carefully, Plan A becomes preferable once "
+            "usage grows large enough due to the smaller incremental cost.",
+            student=_jordan(),
+            use_llm=True,
+        )
+    assert fail is not None
+    assert fail.get("path") == "register_llm"
+    mocked.assert_called_once()
+
+
+def test_register_llm_gate_blocks_selective_skip():
+    """Adult LLM fail must short-circuit before REFINE_SELECTIVE skip."""
+    from app.response_refinement import critique_student_reply
+
+    draft = (
+        "Looking at the numbers carefully, Plan A becomes preferable once "
+        "usage grows large enough due to the smaller incremental cost."
+    )
+    with (
+        patch(
+            "app.response_refinement.complete",
+            return_value=json.dumps(
+                {
+                    "pass": False,
+                    "issues": ["adult_register"],
+                    "brief": "Kid voice: shorter, spoken.",
+                }
+            ),
+        ),
+        patch("app.response_refinement.REFINE_SELECTIVE", True),
+        patch("app.response_refinement.REGISTER_LLM", True),
+    ):
+        out = critique_student_reply(
+            draft,
+            {
+                **_profile(),
+                "profile_id": "jordan",
+                "implied_plan": "A",
+            },
+            student=_jordan(),
+            implied_plan="A",
+            turn_mode="math_scaffold",
+            selective=True,
+        )
+    assert out["ok"] is False
+    assert out.get("path") in ("register_llm", "deterministic_gate")
+    assert "adult_register" in out.get("issues", []) or "tutor_tone" in out.get(
+        "issues", []
+    )
 
 
 def test_ocean_filler_guidance_differs_by_persona():
@@ -100,19 +199,14 @@ def test_ocean_filler_guidance_differs_by_persona():
 
 
 def test_critique_ok_skips_content_rewrite_but_runs_voice_pass():
+    """Selective skip: gates pass → no LLM critic, voice only."""
     draft = "Um… at 50 Plan B was cheaper on my table?"
     voiced = "Wait, at 50 Plan B was cheaper on my table?"
-    critic_json = (
-        '{"ok": true, "claim": {"pass": true, "detail": "ok"}, '
-        '"personality": {"pass": true, "detail": "brief"}, '
-        '"learning": {"pass": true, "detail": "ok"}, '
-        '"misconception": {"pass": true, "detail": "ok"}, '
-        '"issues": [], "brief": ""}'
-    )
     with (
         patch("app.response_refinement.complete_chat", return_value=draft) as gen,
-        patch("app.response_refinement.complete", return_value=critic_json),
+        patch("app.response_refinement.complete") as critic_llm,
         patch("app.response_refinement.rewrite_kid_voice", return_value=voiced) as voice,
+        patch("app.response_refinement.REFINE_SELECTIVE", True),
     ):
         result = generate_with_refinement(
             "sys",
@@ -128,11 +222,47 @@ def test_critique_ok_skips_content_rewrite_but_runs_voice_pass():
     assert revisions == 0
     assert result.draft == draft
     assert result.final_reply == voiced
+    assert result.refine_path == "selective_skip"
+    assert result.feedback_rounds == 1
     assert result.critic is not None
     assert result.critic.get("ok") is True
+    assert result.critic.get("path") == "selective_skip"
     assert "pack" not in result.critic
     assert gen.call_count == 1
+    critic_llm.assert_not_called()
     assert voice.call_count == 1
+
+
+def test_selective_off_runs_llm_critic_when_gates_pass():
+    draft = "Um… at 50 Plan B was cheaper on my table?"
+    voiced = "Wait, at 50 Plan B was cheaper on my table?"
+    critic_json = (
+        '{"ok": true, "claim": {"pass": true, "detail": "ok"}, '
+        '"personality": {"pass": true, "detail": "brief"}, '
+        '"learning": {"pass": true, "detail": "ok"}, '
+        '"misconception": {"pass": true, "detail": "ok"}, '
+        '"issues": [], "brief": ""}'
+    )
+    with (
+        patch("app.response_refinement.complete_chat", return_value=draft) as gen,
+        patch("app.response_refinement.complete", return_value=critic_json) as critic_llm,
+        patch("app.response_refinement.rewrite_kid_voice", return_value=voiced),
+        patch("app.response_refinement.REFINE_SELECTIVE", False),
+    ):
+        result = generate_with_refinement(
+            "sys",
+            [{"role": "user", "content": "hi"}],
+            _profile(),
+            student=_maya(),
+            max_revisions=2,
+            turn_mode="math_scaffold",
+        )
+    assert result.revisions == 0
+    assert result.critic is not None
+    assert result.critic.get("ok") is True
+    assert result.critic.get("path") == "llm_critic"
+    assert gen.call_count == 1
+    assert critic_llm.call_count == 1
 
 
 def test_critique_fail_triggers_rewrite_then_voice():
@@ -142,22 +272,14 @@ def test_critique_fail_triggers_rewrite_then_voice():
     )
     refined = "Wait… on my table at 50, Plan B was less though?"
     voiced = "Wait, on my table at 50 Plan B was less though?"
-    critic_json = (
-        '{"ok": false, '
-        '"claim": {"pass": true, "detail": "ok"}, '
-        '"personality": {"pass": false, "detail": "too long and tutor-like for Low E"}, '
-        '"learning": {"pass": true, "detail": "ok"}, '
-        '"misconception": {"pass": true, "detail": "ok"}, '
-        '"issues": ["personality_overtalk", "tutor_tone"], '
-        '"brief": "One short hedged sentence; quiet Maya voice."}'
-    )
     with (
         patch(
             "app.response_refinement.complete_chat",
             side_effect=[draft, refined],
         ) as gen,
-        patch("app.response_refinement.complete", return_value=critic_json),
+        patch("app.response_refinement.complete") as critic_llm,
         patch("app.response_refinement.rewrite_kid_voice", return_value=voiced) as voice,
+        patch("app.response_refinement.REFINE_SELECTIVE", True),
     ):
         result = generate_with_refinement(
             "sys",
@@ -173,9 +295,11 @@ def test_critique_fail_triggers_rewrite_then_voice():
     assert revisions == 1
     assert result.draft == draft
     assert result.final_reply == voiced
+    assert result.refine_path == "self_refine"
     assert result.critic is not None
     assert "tutor_tone" in result.critic.get("issues", [])
     assert "pack" not in result.critic
+    critic_llm.assert_not_called()  # adult register gate short-circuits
     assert gen.call_count == 2
     assert voice.call_count == 1
     refine_call = gen.call_args_list[1]
@@ -185,6 +309,48 @@ def test_critique_fail_triggers_rewrite_then_voice():
         for m in hist
         if m.get("role") == "user"
     )
+
+
+def test_self_refine_keeps_feedback_history_across_revisions():
+    """Second refine prompt includes both prior draft+feedback pairs (Self-Refine Eq. 4)."""
+    draft = "Therefore we can see that Plan A is essentially better."
+    refined1 = "Consequently Plan A is superior; furthermore the rate is lower."
+    refined2 = "Wait… I think Plan A has the smaller rate?"
+    voiced = "Wait, I think Plan A has the smaller rate?"
+    with (
+        patch(
+            "app.response_refinement.complete_chat",
+            side_effect=[draft, refined1, refined2],
+        ) as gen,
+        patch("app.response_refinement.rewrite_kid_voice", return_value=voiced),
+        patch("app.response_refinement.REFINE_SELECTIVE", True),
+    ):
+        result = generate_with_refinement(
+            "sys",
+            [{"role": "user", "content": "compare"}],
+            _profile(),
+            student=_maya(),
+            max_revisions=2,
+            turn_mode="math_scaffold",
+        )
+    assert result.revisions == 2
+    assert result.refine_path == "self_refine"
+    assert gen.call_count == 3
+    second_refine_hist = gen.call_args_list[2].args[2]
+    user_feedbacks = [
+        m.get("content") or ""
+        for m in second_refine_hist
+        if m.get("role") == "user" and "simulation quality check" in (m.get("content") or "")
+    ]
+    assert len(user_feedbacks) == 2
+    assistant_drafts = [
+        m.get("content") or ""
+        for m in second_refine_hist
+        if m.get("role") == "assistant"
+    ]
+    assert draft in assistant_drafts
+    assert refined1 in assistant_drafts
+
 
 
 def test_deterministic_adult_register_short_circuits_critic_llm():
@@ -210,6 +376,7 @@ def test_critique_unavailable_accepts_draft_then_voice():
             side_effect=RuntimeError("model missing"),
         ),
         patch("app.response_refinement.rewrite_kid_voice", return_value=voiced),
+        patch("app.response_refinement.REFINE_SELECTIVE", False),
     ):
         out, revisions = generate_with_refinement(
             "sys",
@@ -240,6 +407,7 @@ def test_refine_off_skips_voice_pass():
     assert result.draft == draft
     assert result.revisions == 0
     assert result.critic is None
+    assert result.refine_path == "off"
     voice.assert_not_called()
 
 
@@ -270,7 +438,10 @@ def test_critique_student_reply_parses_json():
         '"issues": ["too_eager"], "brief": "Be quieter"}'
     )
     # Kid-voice draft so deterministic register gate does not short-circuit.
-    with patch("app.response_refinement.complete", return_value=raw):
+    with (
+        patch("app.response_refinement.complete", return_value=raw),
+        patch("app.response_refinement.REFINE_SELECTIVE", False),
+    ):
         c = critique_student_reply(
             "Wait I think Plan A wins? Easy.",
             _profile(),
@@ -279,6 +450,7 @@ def test_critique_student_reply_parses_json():
     assert c["ok"] is False
     assert c["personality"]["pass"] is False
     assert "too_eager" in c["issues"]
+    assert c.get("path") == "llm_critic"
 
 
 def test_rewrite_kid_voice_returns_model_output():
@@ -314,7 +486,10 @@ def test_social_critique_ignores_claim_and_misc_failures():
         '"issues": ["claim_missing", "misconception_missing"], '
         '"brief": "State Plan B"}'
     )
-    with patch("app.response_refinement.complete", return_value=raw):
+    with (
+        patch("app.response_refinement.complete", return_value=raw),
+        patch("app.response_refinement.REFINE_SELECTIVE", False),
+    ):
         c = critique_student_reply(
             "I'm good, thanks!",
             {**_profile(), "implied_plan": "B"},

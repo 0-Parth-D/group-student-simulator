@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from pathlib import Path
 
 from app.constructs import load_task_metadata
 from app.mistakes import match_lp_constructs_by_keywords
@@ -14,8 +13,7 @@ from eval.deterministic_checks import check_expert_slip, check_persona_direction
 
 
 def test_families_live_in_metadata_not_python():
-    tagger_path = Path(__file__).resolve().parents[1] / "app" / "task_tagger.py"
-    source = tagger_path.read_text(encoding="utf-8")
+    source = open("app/task_tagger.py", encoding="utf-8").read()
     assert "FAMILY_CONSTRUCTS" not in source
     assert "FAMILY_TO_BANK_ID" not in source
     families = load_task_metadata().get("families") or {}

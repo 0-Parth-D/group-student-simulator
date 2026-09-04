@@ -104,7 +104,15 @@ GROUP_TRACK_B = os.getenv("GROUP_TRACK_B", "true").lower() in ("1", "true", "yes
 
 # Student reply refinement: llm (critique+rewrite) | off
 REFINE_MODE = (os.getenv("REFINE_MODE", "llm") or "llm").lower().strip()
-REFINE_MAX_REVISIONS = int(os.getenv("REFINE_MAX_REVISIONS", "1"))
+REFINE_MAX_REVISIONS = int(os.getenv("REFINE_MAX_REVISIONS", "2"))
+# MAgICoRe-style selective refine: skip LLM critic when deterministic gates pass
+REFINE_SELECTIVE = os.getenv("REFINE_SELECTIVE", "true").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+# After keyword register gate passes, LLM judge for adult/tutor voice (runs before selective skip)
+REGISTER_LLM = os.getenv("REGISTER_LLM", "true").lower() in ("1", "true", "yes")
 
 # Per-turn prompt/target/draft logs in eval_log exports (off by default)
 GENERATION_DEBUG = os.getenv("GENERATION_DEBUG", "").lower() in ("1", "true", "yes")
